@@ -614,14 +614,6 @@ export default function GuestTable({ guests, showEvent = false, events = [], onE
                     {(statusKehadiranMap[detailGuest.status_kehadiran] || statusKehadiranMap.hadir).label}
                   </span>
                 </div>
-                <div className="col-span-2">
-                  <p className="text-muted text-xs mb-0.5">Link Scan</p>
-                  <p className="text-foreground font-mono text-xs break-all bg-input/50 rounded-lg px-3 py-2">
-                    {typeof window !== "undefined"
-                      ? `${window.location.origin}/scan/${detailGuest.qr_token}`
-                      : `/scan/${detailGuest.qr_token}`}
-                  </p>
-                </div>
               </div>
             </div>
             <div className="flex justify-end pt-4 shrink-0 border-t border-border/20">

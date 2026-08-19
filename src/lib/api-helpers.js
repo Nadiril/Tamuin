@@ -102,6 +102,12 @@ export async function requireRole(roles = ["admin", "panitia"]) {
   return { supabase, user, profile };
 }
 
+function isMissingEmailColumn(error) {
+  if (!error) return false;
+  if (error.code === "42703" || error.code === "PGRST204") return true;
+  return /column[\s\S]*email[\s\S]*does not exist/i.test(error.message || "");
+}
+
 export async function insertGuests(supabase, rows, { select = "id", single = false } = {}) {
   const run = (payload) => {
     let query = supabase.from("guests").insert(payload).select(select);
@@ -111,7 +117,7 @@ export async function insertGuests(supabase, rows, { select = "id", single = fal
 
   let result = await run(rows);
   // Kolom email belum ada di database (email_migration.sql belum dijalankan)
-  if (result.error && result.error.code === "42703") {
+  if (result.error && isMissingEmailColumn(result.error)) {
     result = await run(rows.map(({ email, ...rest }) => rest));
   }
   return result;

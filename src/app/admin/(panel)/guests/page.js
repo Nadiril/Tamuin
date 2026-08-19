@@ -418,7 +418,7 @@ export default function GuestsPage() {
       {showImportModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={resetImport}></div>
-          <div className="relative glass-card rounded-2xl p-6 sm:p-8 w-full max-w-2xl mx-4 glow-accent max-h-[90vh] overflow-y-auto">
+          <div className="relative glass-card rounded-2xl p-6 sm:p-8 w-full max-w-7xl mx-4 glow-accent max-h-[90vh] overflow-y-auto">
             {importStep === "upload" && (
               <>
                 <div className="flex items-center justify-between mb-6">
@@ -499,6 +499,7 @@ export default function GuestsPage() {
                     <thead>
                       <tr className="bg-muted/10 border-b border-border">
                         <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">Nama</th>
+                        <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">Nama Mahasiswa</th>
                         <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">Instansi</th>
                         <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">Kategori</th>
                         <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">No. HP</th>
@@ -518,9 +519,10 @@ export default function GuestsPage() {
                             : null;
                         return (
                         <tr key={idx} className="border-b border-border/50 last:border-0">
-                          <td className="px-4 py-3 text-sm font-medium text-foreground">{row.nama || "—"}</td>
-                          <td className="px-4 py-3 text-sm text-muted">{row.instansi || "—"}</td>
-                          <td className="px-4 py-3">
+                          <td className="px-4 py-3 text-sm font-medium text-foreground whitespace-nowrap">{row.nama || "—"}</td>
+                          <td className="px-4 py-3 text-sm text-muted whitespace-nowrap">{row.nama_mahasiswa || "—"}</td>
+                          <td className="px-4 py-3 text-sm text-muted whitespace-nowrap">{row.instansi || "—"}</td>
+                          <td className="px-4 py-3 whitespace-nowrap">
                             <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
                               (row.kategori_tamu || "reguler").toLowerCase() === "vip" ? "bg-warning-muted text-warning border border-warning/20" :
                               (row.kategori_tamu || "reguler").toLowerCase() === "vvip" ? "bg-danger-muted text-danger border border-danger/20" :
@@ -529,17 +531,17 @@ export default function GuestsPage() {
                               {(row.kategori_tamu || "reguler").toLowerCase() === "vvip" ? "VVIP" : (row.kategori_tamu || "reguler").toLowerCase() === "vip" ? "VIP" : "Reguler"}
                             </span>
                           </td>
-                          <td className="px-4 py-3 text-sm text-muted font-mono">{row.no_hp || "—"}</td>
-                          <td className="px-4 py-3">
+                          <td className="px-4 py-3 text-sm text-muted font-mono whitespace-nowrap">{row.no_hp || "—"}</td>
+                          <td className="px-4 py-3 whitespace-nowrap">
                             <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
-                              (row.status_kehadiran || "hadir").toLowerCase() === "terlambat" ? "bg-warning-muted text-warning border border-warning/20" :
-                              (row.status_kehadiran || "hadir").toLowerCase() === "tidak_hadir" ? "bg-danger-muted text-danger border border-danger/20" :
+                              (row.status_kehadiran || "tidak_hadir").toLowerCase() === "terlambat" ? "bg-warning-muted text-warning border border-warning/20" :
+                              (row.status_kehadiran || "tidak_hadir").toLowerCase() === "tidak_hadir" ? "bg-danger-muted text-danger border border-danger/20" :
                               "bg-success-muted text-success border border-success/20"
                             }`}>
-                              {(row.status_kehadiran || "hadir").toLowerCase() === "tidak_hadir" ? "Tidak Hadir" : (row.status_kehadiran || "hadir").toLowerCase() === "terlambat" ? "Terlambat" : "Hadir"}
+                              {(row.status_kehadiran || "tidak_hadir").toLowerCase() === "tidak_hadir" ? "Tidak Hadir" : (row.status_kehadiran || "tidak_hadir").toLowerCase() === "terlambat" ? "Terlambat" : "Hadir"}
                             </span>
                           </td>
-                          <td className="px-4 py-3 text-sm">
+                          <td className="px-4 py-3 text-sm whitespace-nowrap">
                             {resolvedName ? (
                               <span className="text-xs bg-accent-muted text-accent px-2.5 py-1 rounded-full font-medium">
                                 {resolvedName}

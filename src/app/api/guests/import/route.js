@@ -25,7 +25,7 @@ function normalizeRow(g) {
 }
 
 export async function POST(request) {
-  const { supabase, response } = await requireRole(["admin"]);
+  const { supabase, response } = await requireRole(["admin", "panitia"]);
   if (response) return response;
 
   try {

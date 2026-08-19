@@ -66,7 +66,7 @@ export async function POST(request) {
       nama,
       instansi: instansi || null,
       no_hp,
-      email,
+      ...(email ? { email } : {}),
       tujuan: body.tujuan ? sanitize(body.tujuan) : null,
       nama_mahasiswa,
       alamat,

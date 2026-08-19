@@ -1,24 +1,11 @@
-import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { requireRole } from "@/lib/api-helpers";
 
 export async function PUT(request, { params }) {
   const { id } = await params;
-
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  if (profile?.role !== "admin") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const { supabase, user, response } = await requireRole(["admin"]);
+  if (response) return response;
 
   try {
     const body = await request.json();
@@ -36,7 +23,7 @@ export async function PUT(request, { params }) {
       }
     }
 
-    if (body.display_name !== undefined || body.role !== undefined) {
+    if (body.display_name !== undefined || body.role !== undefined || body.status !== undefined) {
       const profileUpdates = {};
       if (body.display_name !== undefined) profileUpdates.display_name = body.display_name;
       if (body.role !== undefined) {
@@ -44,6 +31,12 @@ export async function PUT(request, { params }) {
           return NextResponse.json({ error: "Invalid role. Must be admin or panitia" }, { status: 400 });
         }
         profileUpdates.role = body.role;
+      }
+      if (body.status !== undefined) {
+        if (!["active", "pending"].includes(body.status)) {
+          return NextResponse.json({ error: "Invalid status. Must be active or pending" }, { status: 400 });
+        }
+        profileUpdates.status = body.status;
       }
       const { error: profileError } = await supabase
         .from("profiles")
@@ -62,22 +55,8 @@ export async function PUT(request, { params }) {
 
 export async function DELETE(request, { params }) {
   const { id } = await params;
-
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  if (profile?.role !== "admin") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const { user, response } = await requireRole(["admin"]);
+  if (response) return response;
 
   if (id === user.id) {
     return NextResponse.json(

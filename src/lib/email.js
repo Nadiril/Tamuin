@@ -5,7 +5,7 @@ function createTransporter() {
   const port = parseInt(process.env.SMTP_PORT || "587");
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASS;
-  const fromName = process.env.SMTP_FROM_NAME || "Buku Tamu Digital";
+  const fromName = process.env.SMTP_FROM_NAME || "Tamuin";
 
   if (!host || !user || !pass) {
     return null;
@@ -94,7 +94,7 @@ export function buildEmailHtml({ nama, acara, tanggal, lokasi, qrToken, jamMulai
       </div>
     </div>
     <div class="footer">
-      <p>© ${new Date().getFullYear()} Buku Tamu Digital. All rights reserved.</p>
+      <p>© ${new Date().getFullYear()} Tamuin. All rights reserved.</p>
     </div>
   </div>
 </body>
@@ -111,7 +111,7 @@ export async function sendMail({ to, subject, html }) {
 
   try {
     const info = await transporter.sendMail({
-      from: `"${process.env.SMTP_FROM_NAME || "Buku Tamu Digital"}" <${getSenderEmail()}>`,
+      from: `"${process.env.SMTP_FROM_NAME || "Tamuin"}" <${getSenderEmail()}>`,
       to,
       subject,
       html,

@@ -1,38 +1,32 @@
-import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { generateToken } from "@/lib/token";
+import { sanitizeCSV, requireRole, insertGuests } from "@/lib/api-helpers";
 
-const CSV_FORMULA_CHARS = ["=", "+", "-", "@"];
 const VALID_KATEGORI = ["reguler", "vip", "vvip"];
 
-function sanitize(value) {
-  if (typeof value !== "string") return "";
-  let v = value.trim();
-  for (const char of CSV_FORMULA_CHARS) {
-    if (v.startsWith(char)) {
-      v = "'" + v;
-      break;
-    }
-  }
-  return v.replace(/<[^>]*>/g, "").slice(0, 500);
+function normalizeRow(g) {
+  const kategori = String(g.kategori_tamu || "reguler").toLowerCase();
+  const acaraId = Number(g.acara_id);
+  const validKategori = VALID_KATEGORI.includes(kategori) ? kategori : "reguler";
+  const isVip = validKategori !== "reguler";
+  const no_hp = g.no_hp ? sanitizeCSV(g.no_hp).slice(0, 20) || null : null;
+  return {
+    nama: sanitizeCSV(g.nama) || "Tamu",
+    instansi: sanitizeCSV(g.instansi) || null,
+    no_hp,
+    tujuan: g.tujuan ? sanitizeCSV(g.tujuan) : null,
+    nama_mahasiswa: isVip ? "-" : sanitizeCSV(g.nama_mahasiswa) || sanitizeCSV(g.nama) || "Tamu",
+    alamat: sanitizeCSV(g.alamat),
+    kategori_tamu: validKategori,
+    status_kehadiran: "tidak_hadir",
+    acara_id: Number.isFinite(acaraId) ? acaraId : null,
+    qr_token: generateToken(),
+  };
 }
 
 export async function POST(request) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  if (profile?.role !== "admin") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const { supabase, response } = await requireRole(["admin"]);
+  if (response) return response;
 
   try {
     const { guests: guestData } = await request.json();
@@ -41,29 +35,56 @@ export async function POST(request) {
       return NextResponse.json({ error: "Data tamu tidak valid" }, { status: 400 });
     }
 
-    const guests = guestData.map((g) => {
-      const kategori = String(g.kategori_tamu || "reguler").toLowerCase();
-      const acaraId = Number(g.acara_id);
-      return {
-        nama: sanitize(g.nama) || "Tamu",
-        instansi: sanitize(g.instansi) || "—",
-        no_hp: g.no_hp ? sanitize(g.no_hp).slice(0, 20) : null,
-        tujuan: g.tujuan ? sanitize(g.tujuan) : null,
-        kategori_tamu: VALID_KATEGORI.includes(kategori) ? kategori : "reguler",
-        status_kehadiran: "tidak_hadir",
-        acara_id: Number.isFinite(acaraId) ? acaraId : null,
-        qr_token: generateToken(),
-      };
-    });
+    const guests = guestData.map(normalizeRow);
 
     if (guests.some((g) => !Number.isInteger(g.acara_id))) {
       return NextResponse.json({ error: "Data acara (acara_id) tidak valid" }, { status: 400 });
     }
 
-    const { data, error } = await supabase.from("guests").insert(guests).select();
+    // Dedup: skip tamu yang no_hp-nya sudah terdaftar di acara yang sama
+    // (dalam database maupun dalam file CSV itu sendiri)
+    const acaraIds = [...new Set(guests.map((g) => g.acara_id))];
+    const { data: existing } = await supabase
+      .from("guests")
+      .select("acara_id, no_hp")
+      .in("acara_id", acaraIds);
 
-    if (error) return NextResponse.json({ error: "Gagal mengimpor tamu" }, { status: 500 });
-    return NextResponse.json({ count: data.length }, { status: 201 });
+    const taken = new Set();
+    for (const g of existing || []) {
+      if (g.no_hp) taken.add(`${g.acara_id}|hp:${g.no_hp}`);
+    }
+
+    const toInsert = [];
+    let skipped = 0;
+    for (const g of guests) {
+      const hpKey = g.no_hp ? `${g.acara_id}|hp:${g.no_hp}` : null;
+      if (hpKey && taken.has(hpKey)) {
+        skipped++;
+        continue;
+      }
+      if (hpKey) taken.add(hpKey);
+      toInsert.push(g);
+    }
+
+    if (toInsert.length === 0) {
+      return NextResponse.json({ count: 0, skipped }, { status: 200 });
+    }
+
+    const { data, error } = await insertGuests(supabase, toInsert);
+
+    if (error) {
+      if (error.code === "23505") {
+        return NextResponse.json(
+          { error: "Terdapat nomor HP yang sudah terdaftar di acara yang sama. Data duplikat dilewati." },
+          { status: 409 },
+        );
+      }
+      return NextResponse.json(
+        { error: `Gagal mengimpor tamu: ${error.message}` },
+        { status: 500 },
+      );
+    }
+    return NextResponse.json({ count: data.length, skipped }, { status: 201 });
   } catch (err) {
     return NextResponse.json({ error: "Data tidak valid" }, { status: 400 });
   }

@@ -59,9 +59,9 @@ export default function PanitiaSidebar({ collapsed, onToggleCollapse, mobileOpen
           <div className="shrink-0 flex items-center justify-center overflow-hidden rounded-xl" style={{ height: 44, width: collapsed ? 40 : 44 }}>
             <Image
               src="/Logo.webp"
-              alt="Buku Tamu Digital"
+              alt="Tamuin"
               width={collapsed ? 40 : 44}
-              height={collapsed ? 40 : 44}
+              height={collapsed ? 32 : 35}
               className="object-contain"
               priority
               unoptimized
@@ -70,9 +70,9 @@ export default function PanitiaSidebar({ collapsed, onToggleCollapse, mobileOpen
           {!collapsed && (
             <div className="flex flex-col">
               <span className="text-sm font-bold text-foreground leading-tight tracking-tight">
-                Buku Tamu Digital
+                Tamuin
               </span>
-              <span className="text-[10px] font-medium text-muted leading-tight mt-0.5">
+              <span className="text-xs font-medium text-muted leading-tight mt-0.5">
                 Panel Panitia
               </span>
             </div>
@@ -83,7 +83,7 @@ export default function PanitiaSidebar({ collapsed, onToggleCollapse, mobileOpen
       {/* Navigation */}
       <nav className={`flex-1 overflow-y-auto sidebar-scroll py-3 space-y-0.5 ${collapsed ? "px-0" : "px-2"}`}>
         {!collapsed && (
-          <p className="px-3 mb-2 text-[10px] font-semibold text-muted-foreground uppercase tracking-[0.08em]">
+          <p className="px-3 mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-[0.08em]">
             Menu
           </p>
         )}

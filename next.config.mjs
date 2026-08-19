@@ -1,4 +1,6 @@
 /** @type {import('next').NextConfig} */
+const isDev = process.env.NODE_ENV === "development";
+
 const nextConfig = {
   reactCompiler: true,
   images: {
@@ -26,13 +28,25 @@ const nextConfig = {
         ],
       },
       {
+        source: "/login-tamuku.webp",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=604800, must-revalidate" },
+        ],
+      },
+      {
+        source: "/zxing_reader.wasm",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=604800, must-revalidate" },
+        ],
+      },
+      {
         source: "/(.*)",
         headers: [
           {
             key: "Content-Security-Policy",
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
+              `script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'${isDev ? " 'unsafe-eval'" : ""}`,
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https://api.qrserver.com",
               "font-src 'self' data:",

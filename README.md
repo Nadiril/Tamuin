@@ -1,4 +1,6 @@
-# 📖 Buku Tamu Digital
+# Tamuin
+
+**Tamu masuk, semua tercatat.**
 
 ![Next.js](https://img.shields.io/badge/Next.js-16.2.7-black?style=flat&logo=next.js)
 ![React](https://img.shields.io/badge/React-19.2.4-61DAFB?style=flat&logo=react)
@@ -6,7 +8,9 @@
 ![Supabase](https://img.shields.io/badge/Supabase-3FCF8E?style=flat&logo=supabase)
 ![Recharts](https://img.shields.io/badge/Recharts-22CA9E?style=flat&logo=recharts)
 
-**Buku Tamu Digital** adalah platform buku tamu multi-event modern untuk pencatatan kehadiran tamu secara digital, efisien, dan real-time. Dibangun untuk **STIKOM PGRI Banyuwangi**, sistem ini mendukung registrasi tamu mandiri via QR Code, scan kehadiran oleh panitia, serta dashboard admin yang lengkap.
+**Tamuin** (sebelumnya *Buku Tamu Digital*) adalah platform digital untuk mengelola tamu acara, registrasi, QR Check-in, monitoring kehadiran, dan laporan. Dibangun untuk **STIKOM PGRI Banyuwangi**, sistem ini mendukung registrasi tamu mandiri via QR Code, scan kehadiran oleh panitia, serta dashboard admin yang lengkap.
+
+📄 Riwayat perubahan versi ada di [**CHANGELOG.md**](./CHANGELOG.md).
 
 ---
 
@@ -18,11 +22,29 @@
 | **QR Code** | Setiap tamu mendapat QR Code unik untuk scan kehadiran |
 | **Scan Kehadiran** | Panitia scan QR tamu untuk menandai hadir/terlambat |
 | **Grace Period** | Konfigurasi tolerasi keterlambatan per acara |
+| **Registrasi Mandiri** | Panitia bisa daftar akun sendiri; status `pending` menunggu persetujuan admin |
+| **User Approval** | Admin menyetujui/menolak akun panitia yang baru mendaftar |
+| **Kategori Tamu** | Kategorisasi Reguler / VIP / VVIP beserta data mahasiswa & alamat |
+| **Anti-Duplikat** | Cegah tamu ganda per acara (berdasarkan no HP / email) |
+| **Periode Acara** | Pengelompokan acara per periode untuk section "Acara Terbaru" |
 | **Dashboard Admin** | CRUD event, guest, user, dan laporan lengkap |
 | **Panel Panitia** | Scan QR, lihat history, dan daftar event |
 | **Audit Activity** | Semua aktivitas tercatat real-time |
 | **Export Excel** | Ekspor data tamu ke file XLSX |
-| **Dark Mode** | Tampilan modern dengan tema gelap |
+| **Material 3 UI** | Design system Material 3 + Google Pixel-inspired, font Plus Jakarta Sans |
+
+---
+
+## 🎨 Desain UI
+
+**Tamuin** memakai **Material 3** sebagai design system dan **Google Pixel** sebagai visual inspiration.
+
+- **Font** — Plus Jakarta Sans (dimuat self-hosted via `next/font/google`), dipetakan sebagai `--font-sans`.
+- **Design tokens** — warna (primary, primary-container, surface, surface-variant, outline-variant, dst.), elevation, radius, dan tipografi didefinisikan terpusat di `src/app/globals.css`.
+- **Surface hierarchy** — sidebar putih + top app bar, konten light neutral, kartu `glass-card` dengan border subtle & elevation halus.
+- **Statistik** — kartu statistik selalu menampilkan **angka** (`0` saat kosong), bukan teks empty state seperti "Belum ada data".
+- **"Acara Terbaru"** — preview **maksimal 4 acara** dari **periode aktif** (urutan dibuat terbaru) pada Dashboard admin, dengan tombol **"Lihat Semua →"** menuju Kelola Acara. Acara lama tidak dihapus dan tetap tampil penuh di Kelola Acara.
+- **Responsive** — mobile 1 kolom, tablet portrait 2 kolom, tablet landscape/desktop hingga 4 kolom; tabel tamu berubah menjadi kartu di bawah `lg` (1024px) agar tidak ada horizontal scroll.
 
 ---
 
@@ -34,6 +56,7 @@
 | [![React](https://img.shields.io/badge/React-19.2.4-61DAFB?logo=react)](https://react.dev) | UI library |
 | [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS_4-06B6D4?logo=tailwindcss)](https://tailwindcss.com) | Utility-first CSS |
 | [![Supabase](https://img.shields.io/badge/Supabase-3FCF8E?logo=supabase)](https://supabase.com) | Auth, database, RLS |
+| [![TanStack Query](https://img.shields.io/badge/TanStack_Query-FF4154?logo=reactquery)](https://tanstack.com/query) | State management & data fetching |
 | [![Recharts](https://img.shields.io/badge/Recharts-22CA9E?logo=recharts)](https://recharts.org) | Grafik & statistik |
 | [![Lucide](https://img.shields.io/badge/Lucide_React-F56565?logo=lucide)](https://lucide.dev) | Ikon |
 | [![QRCode](https://img.shields.io/badge/qrcode.react-000?logo=qrcode)](https://github.com/zpao/qrcode.react) | Generate QR Code |
@@ -70,6 +93,11 @@
 │   │   │   ├── 📂 events/
 │   │   │   ├── 📂 guests/
 │   │   │   ├── 📂 public/
+│   │   │   │   ├── 📂 check-email/
+│   │   │   │   ├── 📂 events/
+│   │   │   │   ├── 📂 guests/
+│   │   │   │   ├── 📂 register/      # Registrasi mandiri (pendaftaran akun panitia)
+│   │   │   │   └── 📂 scan/
 │   │   │   ├── 📂 scan/
 │   │   │   ├── 📂 send-qr/
 │   │   │   └── 📂 users/
@@ -115,9 +143,11 @@
 │   │   │   ├── middleware.js  # Supabase middleware
 │   │   │   └── server.js     # Supabase server client
 │   │   ├── ActivityContext.jsx
+│   │   ├── api-helpers.js     # requireRole, sanitize, rate limiter, dedup
 │   │   ├── email.js          # Nodemailer config
 │   │   ├── event-status.js   # Event status helpers
 │   │   ├── EventContext.jsx
+│   │   ├── format-time.js    # Formatter waktu
 │   │   ├── GuestContext.jsx
 │   │   ├── ProfileContext.jsx
 │   │   └── token.js          # QR token generator
@@ -125,10 +155,17 @@
 ├── 📂 supabase/              # Database migrations
 │   ├── migration.sql         # Schema + RLS + trigger + register_guest_scan()
 │   ├── public_register_guest_scan.sql  # Public self-scan function
-│   └── email_migration.sql   # Email logs table + guests email column
+│   ├── email_migration.sql   # Email logs table + guests email column
+│   ├── guest_dedup.sql       # Unique index (acara_id + HP/email) + cleanup duplikat
+│   ├── guest_instansi_optional.sql  # Kolom instansi jadi opsional
+│   ├── guest_kategori_migration.sql # Kategori tamu + nama_mahasiswa + alamat
+│   ├── event_period_migration.sql   # Periode acara (Acara Terbaru di dashboard)
+│   ├── event_period_backfill.sql    # Masukkan acara lama (NULL periode) ke periode aktif
+│   └── user_approval_migration.sql  # Kolom status (pending/active) akun
 ├── .env.local                # Environment variables
 ├── .gitignore
 ├── AGENTS.md
+├── CHANGELOG.md
 ├── eslint.config.mjs
 ├── jsconfig.json             # Path alias (@/)
 ├── next.config.mjs
@@ -176,7 +213,7 @@ Dapatkan credentials dari **Supabase Dashboard → Settings → API**.
 
 ### 4. Setup Database
 
-Buka **Supabase Dashboard → SQL Editor**, lalu jalankan 3 file SQL berikut **secara berurutan**:
+Buka **Supabase Dashboard → SQL Editor**, lalu jalankan file SQL berikut **secara berurutan**:
 
 #### Urutan Migrasi
 
@@ -185,6 +222,12 @@ Buka **Supabase Dashboard → SQL Editor**, lalu jalankan 3 file SQL berikut **s
 | 1 | `supabase/migration.sql` | Tabel (`profiles`, `events`, `guests`, `activities`), RLS policies, trigger auto-profile, view `events_with_guest_count`, function `register_guest_scan()` | ✅ Ya |
 | 2 | `supabase/public_register_guest_scan.sql` | Function `public_register_guest_scan()` untuk self-scan tamu tanpa login (dipakai di `/api/public/scan/[token]`) | ✅ Ya |
 | 3 | `supabase/email_migration.sql` | Kolom `email` & `qr_sent_at` di tabel `guests`, tabel baru `email_logs` + RLS-nya (dipakai di `/api/send-qr`) | ❌ Opsional (hanya jika fitur kirim QR via email dipakai) |
+| 4 | `supabase/guest_dedup.sql` | Unique index `(acara_id, no_hp)` & `(acara_id, email)` + bersihkan duplikat lama (menjaga data terbaru, baris terlama dipertahankan) | ✅ Ya |
+| 5 | `supabase/guest_instansi_optional.sql` | Kolom `instansi` di tabel `guests` diubah menjadi opsional (nullable) | ✅ Ya |
+| 6 | `supabase/guest_kategori_migration.sql` | Kolom `kategori_tamu` (Reguler/VIP/VVIP), `nama_mahasiswa`, `alamat`; hapus kolom waktu duplikat + backfill data lama | ✅ Ya |
+| 7 | `supabase/event_period_migration.sql` | Tabel `periodes` + kolom `events.periode_id` untuk pengelompokan "Acara Terbaru" di dashboard (auto-fill maks. 4 acara per periode) | ✅ Ya |
+| 8 | `supabase/event_period_backfill.sql` | Menempatkan acara lama (dibuat sebelum migrasi periode, `periode_id` masih `NULL`) ke periode aktif agar muncul kembali di preview dashboard | ❌ Opsional (jalankan jika sudah ada data acara sebelum migrasi periode) |
+| 9 | `supabase/user_approval_migration.sql` | Kolom `status` di tabel `profiles` (default `active`; akun hasil registrasi mandiri berstatus `pending` sampai disetujui admin) | ✅ Ya (wajib jika fitur registrasi mandiri dipakai) |
 
 **Cara menjalankan:**
 1. Copy isi file `.sql`
@@ -192,7 +235,7 @@ Buka **Supabase Dashboard → SQL Editor**, lalu jalankan 3 file SQL berikut **s
 3. Klik **Run**
 4. Lanjut ke file berikutnya setelah sukses
 
-> **Catatan:** `migration.sql` sudah idempotent (aman dijalankan ulang). `public_register_guest_scan.sql` dan `email_migration.sql` hanya perlu dijalankan sekali.
+> **Catatan:** Semua file migrasi bersifat idempotent (aman dijalankan ulang). `public_register_guest_scan.sql`, `email_migration.sql`, `guest_dedup.sql`, dan migrasi lainnya cukup dijalankan sekali. `guest_dedup.sql` aman dijalankan setelah `email_migration.sql` (kolom `email` dibuat otomatis bila belum ada). `event_period_migration.sql` **wajib dijalankan** — tanpa kolom `periode_id`, pembuatan acara baru akan gagal dan dashboard menampilkan "Belum ada acara aktif". `event_period_backfill.sql` hanya memproses acara ber-`periode_id NULL`, jadi aman dijalankan kapan pun (bahkan setelah membuat acara baru).
 
 ### 5. Buat User Admin
 
@@ -235,11 +278,11 @@ npm run lint
 ### Untuk Admin
 
 1. **Login** → Buka `/`, masuk dengan email & password admin
-2. **Dashboard** → Lihat statistik jumlah tamu, kehadiran, grafik
+2. **Dashboard** → Lihat statistik jumlah tamu, kehadiran, grafik, dan acara terbaru (maks. 4 acara dari periode aktif; gunakan **"Lihat Semua →"** untuk daftar lengkap)
 3. **Events** → Buat, edit, hapus acara; atur status (`akan_datang`, `registrasi_dibuka`, `registrasi_ditutup`)
-4. **Guests** → Lihat daftar tamu, tambah tamu manual, export Excel
+4. **Guests** → Lihat daftar tamu, tambah/edit/hapus tamu manual, export Excel
 5. **Scan QR** → Scan QR Code tamu untuk verifikasi kehadiran
-6. **Users** → Kelola akun panitia
+6. **Users** → Kelola akun panitia; **setujui akun baru** berstatus `pending` dari registrasi mandiri, ubah role, reset password, hapus akun
 7. **Laporan** → Export data kehadiran ke Excel
 
 ### Untuk Panitia
@@ -248,6 +291,14 @@ npm run lint
 2. **Scan** → Scan QR Code tamu saat acara berlangsung
 3. **Events** → Lihat daftar acara yang sedang aktif
 4. **History** → Riwayat scan yang sudah dilakukan
+
+### Registrasi Mandiri & Persetujuan Akun
+
+1. Panitia membuka halaman login (`/`) lalu memilih **"Buat Akun"** (atau buka `/panitia/register`)
+2. Mengisi nama, email, dan password (minimal 8 karakter)
+3. Akun dibuat dengan role `panitia` dan status **`pending`**
+4. Admin menyetujui akun tersebut di **Panel Admin → Users** (ubah status menjadi `active`)
+5. Setelah disetujui, panitia dapat login dan mengakses panel panitia
 
 ### Proses Scan QR
 
@@ -266,20 +317,30 @@ npm run lint
 | POST | `/api/auth/logout` | Logout user |
 | GET | `/api/auth/session` | Cek session |
 | GET | `/api/events` | List events |
+| POST | `/api/events` | Buat event |
 | GET | `/api/events/[id]` | Detail event |
-| GET | `/api/events/stats` | Statistik event |
+| PUT | `/api/events/[id]` | Update event |
+| DELETE | `/api/events/[id]` | Hapus event |
 | GET | `/api/guests` | List tamu |
+| POST | `/api/guests` | Tambah tamu |
 | GET | `/api/guests/[id]` | Detail tamu |
-| POST | `/api/guests/import` | Import tamu |
+| PUT | `/api/guests/[id]` | Update tamu |
+| DELETE | `/api/guests/[id]` | Hapus tamu |
+| POST | `/api/guests/import` | Import tamu (Excel) |
 | GET | `/api/activities` | Log aktivitas |
 | GET | `/api/users` | List user |
+| POST | `/api/users` | Buat user |
+| PUT | `/api/users/[id]` | Update user (role, status, password) |
+| DELETE | `/api/users/[id]` | Hapus user |
 | GET | `/api/public/events` | Event publik |
 | GET | `/api/public/guests` | Guest publik |
 | POST | `/api/public/guests` | Registrasi tamu publik |
-| GET | `/api/public/scan/[token]` | Cek data QR |
-| POST | `/api/public/scan/[token]` | Konfirmasi scan publik |
+| POST | `/api/public/register` | Registrasi mandiri akun panitia (status `pending`) |
 | POST | `/api/public/check-email` | Cek email terdaftar |
+| GET | `/api/public/scan/[token]` | Cek data QR (publik) |
+| POST | `/api/public/scan/[token]` | Konfirmasi scan publik |
 | GET | `/api/scan/[token]` | Data scan (auth) |
+| POST | `/api/scan/[token]` | Konfirmasi scan (auth) |
 | POST | `/api/send-qr` | Kirim QR via email |
 
 ---
@@ -299,15 +360,24 @@ npm run lint
 └─────────────┘     │ tgl_selesai │     │ qr_token    │
                     │ jam_mulai   │     │ status      │
 ┌─────────────┐     │ jam_selesai │     │ waktu_dtg   │
-│ activities  │     │ grace_period│     │ scanned_by  │◄────┐
-├─────────────┤     │ status      │     │ created_at  │     │
-│ id (bigint) │     │ created_at  │     └─────────────┘     │
-│ action      │     └─────────────┘                          │
-│ detail      │                                              │
-│ timestamp   │     ┌────────────────────────────────────────┘
-│ user_id     │◄────┘
+│ activities  │     │ grace_period│     │ scanned_by  │
+├─────────────┤     │ status      │     │ created_at  │
+│ id (bigint) │     │ periode_id  │────┐└─────────────┘
+│ action      │     │ created_at  │    │
+│ detail      │     └─────────────┘    │
+│ timestamp   │                        │
+│ user_id     │                        │
+└─────────────┘                        │
+                                       │
+┌─────────────┐                        │
+│  periodes   │◄───────────────────────┘
+├─────────────┤
+│ id (bigint) │
+│ created_at  │
 └─────────────┘
 ```
+
+> **Relasi utama:** `profiles.created_by` → `events` · `events.id` → `guests.acara_id` · `guests.scanned_by` → `activities.user_id` · `events.periode_id` (nullable) → `periodes.id` untuk pengelompokan "Acara Terbaru" per periode/batch aktif.
 
 ---
 
@@ -371,6 +441,6 @@ Proyek ini menggunakan lisensi internal **STIKOM PGRI Banyuwangi**.
 ---
 
 <p align="center">
-  Dibuat dengan ❤️ oleh <a href="https://github.com/Nadiril">Nadiril</a><br>
+  Dibuat dengan ❤️ oleh <a href="https://github.com/Nadiril">M. Nadiril Khoir</a><br>
   <sub>STIKOM PGRI Banyuwangi</sub>
 </p>

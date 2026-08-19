@@ -3,8 +3,8 @@ import SessionTimeout from "@/components/SessionTimeout";
 import AuthGuard from "@/components/AuthGuard";
 
 export const metadata = {
-  title: "Admin — Buku Tamu Digital",
-  description: "Panel admin Buku Tamu Digital.",
+  title: "Admin — Tamuin",
+  description: "Panel admin Tamuin.",
 };
 
 export default function PanelLayout({ children }) {

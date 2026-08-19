@@ -1,23 +1,10 @@
-import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { requireRole } from "@/lib/api-helpers";
 
 export async function PUT(request, { params }) {
   const { id } = await params;
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  if (profile?.role !== "admin") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const { supabase, response } = await requireRole(["admin"]);
+  if (response) return response;
 
   try {
     const body = await request.json();
@@ -59,7 +46,7 @@ export async function PUT(request, { params }) {
         const detail = `${error.message} ${error.details || ""}`.toLowerCase();
         if (detail.includes("single_active")) {
           return NextResponse.json(
-            { error: "Hanya satu acara yang bisa berstatus Registrasi Dibuka dalam satu waktu." },
+            { error: "Hanya satu acara yang bisa berstatus registrasi_dibuka dalam satu waktu." },
             { status: 409 },
           );
         }
@@ -78,21 +65,8 @@ export async function PUT(request, { params }) {
 
 export async function DELETE(request, { params }) {
   const { id } = await params;
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  if (profile?.role !== "admin") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const { supabase, response } = await requireRole(["admin"]);
+  if (response) return response;
 
   const { error } = await supabase.from("events").delete().eq("id", id);
   if (error) return NextResponse.json({ error: "Gagal menghapus acara" }, { status: 500 });

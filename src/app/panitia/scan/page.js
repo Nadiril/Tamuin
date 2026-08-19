@@ -8,6 +8,7 @@ import "@/lib/zxing";
 import { useGuestsQuery, useGuestMutations, guestsKey } from "@/lib/queries/useGuestsQuery";
 import { useEventsQuery } from "@/lib/queries/useEventsQuery";
 import { useLogActivity } from "@/lib/queries/useActivitiesQuery";
+import { formatTime as formatTimeWIB } from "@/lib/format-time";
 import {
   QrCode,
   User,
@@ -16,6 +17,7 @@ import {
   CheckCircle,
   Send,
   ArrowLeft,
+  ArrowRight,
   Loader2,
   Smartphone,
   Camera,
@@ -119,7 +121,7 @@ function ScanContent() {
         ));
         setScannedGuest((prev) => ({ ...prev, status_kehadiran: data.status }));
         setSubmitted(true);
-        const scanTime = new Date(data.guest?.waktu_kedatangan || new Date().toISOString()).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+        const scanTime = formatTimeWIB(data.guest?.waktu_kedatangan || new Date().toISOString());
         const scanStatus = data.status === "terlambat" ? "terlambat" : "tepat waktu";
         logActivity({ action: "scan_guest", detail: `Tamu "${scannedGuest.nama}" dari "${scannedGuest.instansi}" check-in ${scanStatus} pukul ${scanTime} di "${selectedEvent?.nama_acara}"` });
         showToast(
@@ -185,19 +187,30 @@ function ScanContent() {
   // No event selected — show event cards to pick from
   if (!selectedEvent) {
     return (
-      <div className="w-full max-w-[1440px] mx-auto px-6 max-lg:px-5 max-sm:px-4 py-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-foreground tracking-tight">Scan QR</h1>
-            <p className="text-sm text-muted-foreground mt-1">Pilih acara untuk mulai memindai QR tamu</p>
+      <div className="w-full max-w-[1440px] mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+        {/* Page header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => router.push("/panitia")}
+              aria-label="Kembali ke dashboard"
+              className="shrink-0 w-10 h-10 rounded-lg border border-border bg-white flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-border-hover transition-colors cursor-pointer"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+            <div>
+              <h1 className="text-base font-bold text-foreground tracking-tight">Pilih Acara</h1>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Pilih acara untuk mulai memindai QR kehadiran tamu
+              </p>
+            </div>
           </div>
-          <button
-            onClick={() => router.push("/panitia/events")}
-            className="hidden sm:inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground border border-border hover:bg-card-hover transition-colors cursor-pointer"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Semua Acara
-          </button>
+          {events.length > 0 && (
+            <span className="w-fit inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground bg-white border border-border rounded-full px-3 py-1.5">
+              <Calendar className="w-3.5 h-3.5 text-accent" />
+              {events.length} Acara Tersedia
+            </span>
+          )}
         </div>
 
         {events.length === 0 ? (
@@ -209,7 +222,7 @@ function ScanContent() {
             <p className="text-sm text-muted-foreground mb-6">Silakan tunggu admin membuat acara terlebih dahulu.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-lg:gap-5 max-sm:gap-4">
+          <div className={`grid grid-cols-1 gap-5 max-lg:gap-4 max-sm:gap-3 ${events.length === 1 ? "sm:grid-cols-1 xl:max-w-2xl mx-auto" : events.length === 2 ? "sm:grid-cols-2 xl:grid-cols-2" : "sm:grid-cols-2 xl:grid-cols-3"}`}>
             {events.map((event) => {
               const s = statusStyles[event.status] || statusStyles.akan_datang;
               const totalTamu = guests.filter((g) => g.acara_id === event.id).length;
@@ -217,38 +230,47 @@ function ScanContent() {
                 (g) => g.acara_id === event.id && (g.status_kehadiran === "hadir" || g.status_kehadiran === "terlambat")
               ).length;
               const canScan = event.status === "registrasi_dibuka";
+              const chipTone = canScan
+                ? "bg-accent-muted text-accent"
+                : event.status === "akan_datang"
+                  ? "bg-warning-muted text-warning"
+                  : "bg-muted/5 text-muted-foreground/50";
 
               return (
                 <div
                   key={event.id}
-                  className={`group bg-white rounded-xl border transition-all duration-200 overflow-hidden ${
-                    canScan
-                      ? "border-border hover:border-accent/30 hover:shadow-lg hover:shadow-accent/[0.03]"
-                      : "border-border hover:border-border-hover hover:shadow-sm"
-                  }`}
+                  className={`group flex flex-col rounded-xl border bg-surface shadow-[var(--shadow-soft)] transition-all duration-200 overflow-hidden ${canScan
+                    ? "border-accent/25 hover:border-accent/40 hover:shadow-[var(--shadow-lifted)]"
+                    : "border-outline-variant hover:border-border-hover hover:shadow-[var(--shadow-lifted)]"
+                    }`}
                 >
                   <div className={`h-1 w-full ${canScan ? "bg-accent" : event.status === "akan_datang" ? "bg-warning" : "bg-muted-foreground/20"}`} />
-                  <div className="p-6 max-lg:p-5 max-sm:p-4 space-y-4">
-                    <div className="flex items-start justify-between gap-3">
+                  <div className="flex flex-col flex-1 p-5 space-y-4">
+                    {/* Header */}
+                    <div className="flex items-start gap-3">
+                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${chipTone}`}>
+                        <Calendar className="w-5 h-5" />
+                      </div>
                       <div className="flex-1 min-w-0">
-                        <span className={`${s.badge} text-[10px] font-semibold px-2 py-0.5 rounded-full inline-flex items-center gap-1`}>
+                        <span className={`${s.badge} text-xs font-semibold px-2 py-0.5 rounded-full inline-flex items-center gap-1`}>
                           <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
                           {s.label}
                         </span>
-                        <h3 className="text-sm font-semibold text-foreground truncate group-hover:text-accent transition-colors mt-1">
+                        <h3 className="text-sm font-semibold text-foreground line-clamp-2 group-hover:text-accent transition-colors mt-1.5">
                           {event.nama_acara}
                         </h3>
                       </div>
                     </div>
 
-                    <div className="space-y-2">
+                    {/* Details */}
+                    <div className="space-y-2.5">
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <MapPin className="w-3.5 h-3.5 shrink-0" />
                         <span className="truncate">{event.lokasi}</span>
                       </div>
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <CalendarRange className="w-3.5 h-3.5 shrink-0" />
-                        <span>{formatDate(event.tanggal_mulai)}{event.jam_mulai ? `, ${event.jam_mulai}` : ""}</span>
+                        <span className="truncate">{formatDate(event.tanggal_mulai)}{event.jam_mulai ? `, ${event.jam_mulai}` : ""}</span>
                       </div>
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <Users className="w-3.5 h-3.5 shrink-0" />
@@ -257,17 +279,19 @@ function ScanContent() {
                       </div>
                     </div>
 
-                    <div className="pt-3 border-t border-border/50">
+                    {/* Action — pinned to bottom so cards stay equal height */}
+                    <div className="mt-auto pt-4">
                       {canScan ? (
                         <button
                           onClick={() => router.push(`/panitia/scan?eventId=${event.id}`)}
-                          className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-accent text-white text-xs font-medium hover:bg-accent-hover transition-colors cursor-pointer"
+                          className="w-full inline-flex items-center gap-2 px-3 py-2.5 rounded-lg bg-accent text-white text-xs font-semibold hover:bg-accent-hover transition-colors shadow-sm shadow-accent/20 group-hover:shadow-accent/30 cursor-pointer"
                         >
-                          <QrCode className="w-3.5 h-3.5" />
+                          <QrCode className="w-3.5 h-3.5 shrink-0" />
                           Scan QR
+                          <ArrowRight className="w-3.5 h-3.5 ml-auto opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
                         </button>
                       ) : (
-                        <div className="inline-flex items-center justify-center gap-2 w-full px-3 py-2 rounded-lg bg-muted/5 text-muted-foreground/50 text-xs font-medium">
+                        <div className="w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg bg-muted/5 text-muted-foreground/50 text-xs font-medium">
                           <Clock className="w-3.5 h-3.5" />
                           {event.status === "akan_datang" ? "Registrasi Belum Dibuka" : "Registrasi Ditutup"}
                         </div>
@@ -323,31 +347,10 @@ function ScanContent() {
   }
 
   return (
-    <div className="w-full max-w-[1440px] mx-auto px-6 max-lg:px-5 max-sm:px-4 py-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-2 mb-0.5">
-            <h1 className="text-xl font-bold text-foreground tracking-tight">Scan QR</h1>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-success-light text-success text-[10px] font-semibold border border-success/20">
-              <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse-subtle" />
-              {selectedEvent.nama_acara}
-            </span>
-          </div>
-          <p className="text-sm text-muted-foreground">Scan QR Code tamu untuk mencatat kehadiran</p>
-        </div>
-        <button
-          onClick={() => router.push("/panitia/events")}
-          className="hidden sm:inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground border border-border hover:bg-card-hover transition-colors cursor-pointer"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Ganti Acara
-        </button>
-      </div>
-
+    <div className="w-full max-w-[1440px] mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Scanner */}
-        <div className="bg-white rounded-xl border border-border overflow-hidden">
+        <div className="glass-card rounded-2xl overflow-hidden">
           <div className="px-5 py-4 border-b border-border">
             <div className="flex items-center gap-2">
               <Camera className="w-4 h-4 text-accent" />
@@ -368,7 +371,12 @@ function ScanContent() {
                   components={components}
                   styles={{
                     container: { width: "100%", height: "100%" },
-                    video: { width: "100%", height: "100%", objectFit: "cover" },
+                    video: {
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                      transform: facingMode === "environment" ? "scaleX(1)" : "scaleX(-1)",
+                    },
                   }}
                   startTimeoutMs={5000}
                 />
@@ -432,7 +440,7 @@ function ScanContent() {
         </div>
 
         {/* Guest Info */}
-        <div className="bg-white rounded-xl border border-border overflow-hidden">
+        <div className="glass-card rounded-2xl overflow-hidden">
           <div className="px-5 py-4 border-b border-border">
             <div className="flex items-center gap-2">
               <User className="w-4 h-4 text-accent" />
@@ -443,14 +451,12 @@ function ScanContent() {
             {scannedGuest ? (
               <div className="space-y-4">
                 {/* Status Banner */}
-                <div className={`flex items-center gap-3 p-3.5 rounded-lg border ${
-                  submitted
-                    ? "bg-success-light border-success/20"
-                    : "bg-accent-muted border-accent/10"
-                }`}>
-                  <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${
-                    submitted ? "bg-success/10" : "bg-accent/10"
+                <div className={`flex items-center gap-3 p-3.5 rounded-lg border ${submitted
+                  ? "bg-success-light border-success/20"
+                  : "bg-accent-muted border-accent/10"
                   }`}>
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${submitted ? "bg-success/10" : "bg-accent/10"
+                    }`}>
                     {submitted ? (
                       <CheckCircle className="w-5 h-5 text-success" />
                     ) : (
@@ -484,7 +490,25 @@ function ScanContent() {
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground">Instansi</p>
-                      <p className="text-sm font-semibold text-foreground">{scannedGuest.instansi}</p>
+                      <p className="text-sm font-semibold text-foreground">{scannedGuest.instansi || "—"}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 rounded-lg bg-card-hover">
+                    <div className="w-8 h-8 rounded-lg bg-accent-muted flex items-center justify-center shrink-0">
+                      <User className="w-4 h-4 text-accent" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Nama Mahasiswa</p>
+                      <p className="text-sm font-semibold text-foreground">{scannedGuest.nama_mahasiswa || "-"}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 rounded-lg bg-card-hover">
+                    <div className="w-8 h-8 rounded-lg bg-accent-muted flex items-center justify-center shrink-0">
+                      <MapPin className="w-4 h-4 text-accent" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Alamat</p>
+                      <p className="text-sm font-semibold text-foreground">{scannedGuest.alamat || "—"}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 p-3 rounded-lg bg-card-hover">
@@ -502,9 +526,8 @@ function ScanContent() {
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground">Status</p>
-                      <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full inline-block mt-0.5 ${
-                        (statusKehadiranMap[scannedGuest.status_kehadiran] || statusKehadiranMap.tidak_hadir).badge
-                      }`}>
+                      <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full inline-block mt-0.5 ${(statusKehadiranMap[scannedGuest.status_kehadiran] || statusKehadiranMap.tidak_hadir).badge
+                        }`}>
                         {(statusKehadiranMap[scannedGuest.status_kehadiran] || statusKehadiranMap.tidak_hadir).label}
                       </span>
                     </div>
@@ -543,7 +566,7 @@ function ScanContent() {
                 </div>
                 <p className="text-sm font-semibold text-muted-foreground">Belum ada data tamu</p>
                 <p className="text-xs text-muted-foreground/60 mt-1 max-w-xs">
-                Arahkan kamera ke QR Code tamu untuk memulai pemindaian
+                  Arahkan kamera ke QR Code tamu untuk memulai pemindaian
                 </p>
               </div>
             )}
@@ -553,13 +576,12 @@ function ScanContent() {
 
       {/* Toast */}
       {toast && (
-        <div className="fixed bottom-6 right-6 z-50 animate-in">
-          <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border shadow-lg bg-white ${
-            toast.type === "success" ? "border-success/20" : "border-danger/20"
-          }`}>
+        <div className="fixed bottom-4 right-4 left-4 sm:left-auto sm:bottom-6 sm:right-6 z-50 flex justify-end animate-in">
+          <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border shadow-lg bg-white w-full sm:w-auto ${toast.type === "success" ? "border-success/20" : "border-danger/20"
+            }`}>
             <CheckCircle className={`w-5 h-5 ${toast.type === "success" ? "text-success" : "text-danger"}`} />
-            <p className="text-sm font-medium text-foreground">{toast.message}</p>
-            <button onClick={() => setToast(null)} className="text-muted-foreground hover:text-foreground cursor-pointer">
+            <p className="text-sm font-medium text-foreground flex-1 sm:flex-initial">{toast.message}</p>
+            <button onClick={() => setToast(null)} className="text-muted-foreground hover:text-foreground cursor-pointer shrink-0">
               <X className="w-4 h-4" />
             </button>
           </div>

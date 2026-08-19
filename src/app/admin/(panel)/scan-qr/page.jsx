@@ -6,10 +6,11 @@ import Navbar from "@/components/Navbar";
 import QRScanner from "@/components/scanner/QRScanner";
 import Button from "@/components/Button";
 import Toast from "@/components/Toast";
-import { useGuestsQuery, useGuestMutations } from "@/lib/queries/useGuestsQuery";
+import { useGuestsQuery } from "@/lib/queries/useGuestsQuery";
 import { useEventsQuery } from "@/lib/queries/useEventsQuery";
 import { useLogActivity } from "@/lib/queries/useActivitiesQuery";
-import { UserRound, Clock, CheckCircle, Building2, Phone, Calendar, User, Send, ArrowLeft, QrCode } from "lucide-react";
+import { formatTime as formatTimeWIB } from "@/lib/format-time";
+import { UserRound, Clock, CheckCircle, Building2, Phone, Calendar, User, Send, ArrowLeft, QrCode, MapPin } from "lucide-react";
 
 function ScanQRContent() {
   const searchParams = useSearchParams();
@@ -18,7 +19,6 @@ function ScanQRContent() {
   const { data: allEvents = [] } = useEventsQuery();
   const selectedEvent = allEvents.find((e) => e.id === parseInt(eventId));
   const { data: guests = [] } = useGuestsQuery();
-  const { updateGuest } = useGuestMutations();
   const { mutateAsync: logActivity } = useLogActivity();
 
   const [scannedGuest, setScannedGuest] = useState(null);
@@ -49,13 +49,11 @@ function ScanQRContent() {
       const res = await fetch(`/api/scan/${scannedGuest.qr_token}?acara_id=${eventId}`, { method: "POST" });
       const data = await res.json();
       if (data.success) {
-        await updateGuest(scannedGuest.id, {
-          status_kehadiran: data.status,
-          waktu_kedatangan: data.guest?.waktu_kedatangan || new Date().toISOString(),
-        });
+        // Status diupdate oleh RPC register_guest_scan di server;
+        // cache React Query disinkronkan lewat realtime subscription.
         setScannedGuest((prev) => ({ ...prev, status_kehadiran: data.status }));
         setSubmitted(true);
-        const scanTime = new Date(data.guest?.waktu_kedatangan || new Date().toISOString()).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+        const scanTime = formatTimeWIB(data.guest?.waktu_kedatangan || new Date().toISOString());
         setScanHistory((prev) => [
           { id: Date.now(), nama: scannedGuest.nama, instansi: scannedGuest.instansi, no_hp: scannedGuest.no_hp, kategori_tamu: scannedGuest.kategori_tamu, event: selectedEvent?.nama_acara || allEvents.find((e) => e.id === scannedGuest.acara_id)?.nama_acara, status: data.status, time: scanTime },
           ...prev,
@@ -64,8 +62,8 @@ function ScanQRContent() {
         logActivity({ action: "scan_guest", detail: `Tamu "${scannedGuest.nama}" dari "${scannedGuest.instansi}" check-in ${scanStatus} pukul ${scanTime}` + (selectedEvent ? ` di "${selectedEvent.nama_acara}"` : "") });
         showToast(
           data.status === "hadir" ? "Kehadiran tepat waktu!" :
-          data.status === "terlambat" ? "Tamu tercatat terlambat." :
-          "Kehadiran tercatat."
+            data.status === "terlambat" ? "Tamu tercatat terlambat." :
+              "Kehadiran tercatat."
         );
         setTimeout(resetScan, 2000);
       } else {
@@ -105,16 +103,16 @@ function ScanQRContent() {
   };
 
   const statusStyles = {
-    registrasi_dibuka: { badge: "bg-success-muted text-success", dot: "bg-success" },
-    akan_datang: { badge: "bg-warning-muted text-warning", dot: "bg-warning" },
-    registrasi_ditutup: { badge: "bg-danger-muted text-danger", dot: "bg-danger" },
+    registrasi_dibuka: { badge: "bg-success-muted text-success", dot: "bg-success", label: "Registrasi Dibuka" },
+    akan_datang: { badge: "bg-warning-muted text-warning", dot: "bg-warning", label: "Akan Datang" },
+    registrasi_ditutup: { badge: "bg-danger-muted text-danger", dot: "bg-danger", label: "Registrasi Ditutup" },
   };
 
   if (!selectedEvent) {
     return (
       <>
         <Navbar title="Registrasi Tamu" subtitle="Pilih acara untuk memulai registrasi tamu" />
-        <div className="flex-1 p-6 space-y-6">
+        <div className="flex-1 w-full max-w-[1440px] mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
           {allEvents.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
               <div className="w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center mb-4">
@@ -139,7 +137,7 @@ function ScanQRContent() {
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${canScan ? "bg-accent/10" : "bg-muted/10"}`}>
                         <QrCode className={`w-5 h-5 ${canScan ? "text-accent" : "text-muted/50"}`} />
                       </div>
-                      <span className={`${s.badge} text-[10px] font-semibold px-2.5 py-1 rounded-full flex items-center gap-1.5 ml-3 whitespace-nowrap`}>
+                      <span className={`${s.badge} text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1.5 ml-3 whitespace-nowrap`}>
                         <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`}></span>
                         {s.label || event.status}
                       </span>
@@ -159,7 +157,7 @@ function ScanQRContent() {
   return (
     <>
       <Navbar title={`Registrasi Tamu - ${selectedEvent.nama_acara}`} subtitle="Scan QR Code tamu untuk mencatat kehadiran"
-        actions={<Button variant="secondary" size="sm" onClick={() => router.push("/admin/scan-qr")} icon={<ArrowLeft className="w-4 h-4" />}>Ganti Acara</Button>}
+        actions={<Button variant="secondary" size="sm" onClick={() => router.push("/admin/scan-qr")} title="Ganti Acara" icon={<ArrowLeft className="w-4 h-4" />}><span className="hidden sm:inline">Ganti Acara</span></Button>}
       />
 
       {selectedEvent.status !== "registrasi_dibuka" && (
@@ -176,7 +174,7 @@ function ScanQRContent() {
         </div>
       )}
 
-      <div className="flex-1 p-4 sm:p-6 space-y-4 sm:space-y-8">
+      <div className="flex-1 w-full max-w-[1440px] mx-auto p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 items-stretch">
           <div className="glass-card rounded-2xl p-4 sm:p-6 flex flex-col">
             <h2 className="text-sm sm:text-base font-bold text-foreground mb-3 sm:mb-4">Scanner QR-Code</h2>
@@ -211,7 +209,7 @@ function ScanQRContent() {
                     <p className={`text-xs sm:text-sm font-semibold ${submitted ? "text-success" : "text-accent"}`}>
                       {submitted ? "Kehadiran Tercatat" : "Scan Berhasil"}
                     </p>
-                    <p className={`text-[10px] sm:text-xs ${submitted ? "text-success/60" : "text-accent/60"}`}>
+                    <p className={`text-xs sm:text-sm ${submitted ? "text-success/60" : "text-accent/60"}`}>
                       {submitted ? "Tamu sudah check-in" : "QR Code terverifikasi"}
                     </p>
                   </div>
@@ -219,28 +217,35 @@ function ScanQRContent() {
                 <div className="p-3 sm:p-4 rounded-xl bg-input/50 border border-border space-y-2 sm:space-y-3">
                   <div className="flex items-center gap-2 sm:gap-3">
                     <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg bg-accent/10 flex items-center justify-center shrink-0"><User className="w-3 h-3 sm:w-4 sm:h-4 text-accent" /></div>
-                    <div><p className="text-[10px] sm:text-xs text-muted">Nama</p><p className="text-xs sm:text-sm font-semibold text-foreground">{scannedGuest.nama}</p></div>
+                    <div><p className="text-xs text-muted">Nama</p><p className="text-xs sm:text-sm font-semibold text-foreground">{scannedGuest.nama}</p></div>
                   </div>
                   <div className="flex items-center gap-2 sm:gap-3">
                     <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg bg-accent/10 flex items-center justify-center shrink-0"><Building2 className="w-3 h-3 sm:w-4 sm:h-4 text-accent" /></div>
-                    <div><p className="text-[10px] sm:text-xs text-muted">Instansi</p><p className="text-xs sm:text-sm font-semibold text-foreground">{scannedGuest.instansi}</p></div>
+                    <div><p className="text-xs text-muted">Instansi</p><p className="text-xs sm:text-sm font-semibold text-foreground">{scannedGuest.instansi || "—"}</p></div>
+                  </div>
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg bg-accent/10 flex items-center justify-center shrink-0"><User className="w-3 h-3 sm:w-4 sm:h-4 text-accent" /></div>
+                    <div><p className="text-xs text-muted">Nama Mahasiswa</p><p className="text-xs sm:text-sm font-semibold text-foreground">{scannedGuest.nama_mahasiswa || "-"}</p></div>
+                  </div>
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg bg-accent/10 flex items-center justify-center shrink-0"><MapPin className="w-3 h-3 sm:w-4 sm:h-4 text-accent" /></div>
+                    <div><p className="text-xs text-muted">Alamat</p><p className="text-xs sm:text-sm font-semibold text-foreground">{scannedGuest.alamat || "—"}</p></div>
                   </div>
                   <div className="flex items-center gap-2 sm:gap-3">
                     <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg bg-accent/10 flex items-center justify-center shrink-0"><Phone className="w-3 h-3 sm:w-4 sm:h-4 text-accent" /></div>
-                    <div><p className="text-[10px] sm:text-xs text-muted">No. HP</p><p className="text-xs sm:text-sm font-semibold text-foreground">{scannedGuest.no_hp || "—"}</p></div>
+                    <div><p className="text-xs text-muted">No. HP</p><p className="text-xs sm:text-sm font-semibold text-foreground">{scannedGuest.no_hp || "—"}</p></div>
                   </div>
                   <div className="flex items-center gap-2 sm:gap-3">
                     <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg bg-accent/10 flex items-center justify-center shrink-0"><Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-accent" /></div>
-                    <div><p className="text-[10px] sm:text-xs text-muted">Acara</p><p className="text-xs sm:text-sm font-semibold text-foreground">{allEvents.find((e) => e.id === scannedGuest.acara_id)?.nama_acara || "—"}</p></div>
+                    <div><p className="text-xs text-muted">Acara</p><p className="text-xs sm:text-sm font-semibold text-foreground">{allEvents.find((e) => e.id === scannedGuest.acara_id)?.nama_acara || "—"}</p></div>
                   </div>
                   <div className="flex items-center gap-2 sm:gap-3">
                     <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg bg-accent/10 flex items-center justify-center shrink-0"><CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-accent" /></div>
                     <div>
-                      <p className="text-[10px] sm:text-xs text-muted">Status</p>
-                      <span className={`text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full inline-block mt-0.5 ${
-                        scannedGuest.status_kehadiran === "hadir" ? "bg-success-muted text-success border border-success/20" :
+                      <p className="text-xs text-muted">Status</p>
+                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full inline-block mt-0.5 ${scannedGuest.status_kehadiran === "hadir" ? "bg-success-muted text-success border border-success/20" :
                         scannedGuest.status_kehadiran === "terlambat" ? "bg-warning-muted text-warning border border-warning/20" :
-                        "bg-warning-muted text-warning border border-warning/20"}`}>
+                          "bg-warning-muted text-warning border border-warning/20"}`}>
                         {scannedGuest.status_kehadiran === "hadir" ? "Sudah Hadir" : scannedGuest.status_kehadiran === "terlambat" ? "Terlambat" : "Belum Hadir"}
                       </span>
                     </div>
@@ -264,7 +269,7 @@ function ScanQRContent() {
                   <UserRound className="w-6 h-6 sm:w-8 sm:h-8 text-muted/40" />
                 </div>
                 <p className="text-xs sm:text-sm font-semibold text-muted">Belum ada data tamu</p>
-                <p className="text-[10px] sm:text-xs text-muted/60 mt-1">Data akan tampil setelah QR Code berhasil dipindai</p>
+                <p className="text-xs text-muted/60 mt-1">Data akan tampil setelah QR Code berhasil dipindai</p>
               </div>
             )}
           </div>
@@ -286,14 +291,14 @@ function ScanQRContent() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs sm:text-sm font-semibold text-foreground">{item.nama}</p>
-                      <p className="text-[10px] sm:text-xs text-muted">{item.instansi}</p>
-                      <p className="text-[10px] sm:text-xs text-muted/60">{item.event}</p>
+                      <p className="text-xs text-muted">{item.instansi || "—"}</p>
+                      <p className="text-xs text-muted/60">{item.event}</p>
                     </div>
                     <div className="shrink-0 text-right">
-                      <span className={`text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full inline-block ${isLate ? "bg-warning-muted text-warning" : "bg-success-muted text-success"}`}>
+                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full inline-block ${isLate ? "bg-warning-muted text-warning" : "bg-success-muted text-success"}`}>
                         {isLate ? "Terlambat" : "Hadir"}
                       </span>
-                      <span className="block text-[10px] sm:text-xs text-muted/60 mt-1">{item.time}</span>
+                      <span className="block text-xs text-muted/60 mt-1">{item.time}</span>
                     </div>
                   </div>
                 );
@@ -302,14 +307,14 @@ function ScanQRContent() {
           ) : (
             <div className="flex flex-col items-center justify-center py-10 sm:py-16 px-4 sm:px-6 text-center">
               <p className="text-xs sm:text-sm font-semibold text-muted">Belum ada riwayat scan</p>
-              <p className="text-[10px] sm:text-xs text-muted/60 mt-1">Riwayat akan muncul setelah tamu berhasil discan</p>
+              <p className="text-xs text-muted/60 mt-1">Riwayat akan muncul setelah tamu berhasil discan</p>
             </div>
           )}
         </div>
       </div>
 
       {toast && (
-        <div className="fixed bottom-6 right-6 z-[60]">
+        <div className="fixed bottom-4 right-4 left-4 sm:left-auto sm:bottom-6 sm:right-6 z-[60] flex justify-end">
           <Toast key={toast.id} message={toast.message} type={toast.type} onClose={() => setToast(null)} />
         </div>
       )}

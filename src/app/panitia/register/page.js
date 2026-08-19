@@ -42,6 +42,8 @@ function RegisterContent() {
     instansi: "",
     no_hp: "",
     email: "",
+    nama_mahasiswa: "",
+    alamat: "",
     kategori_tamu: "reguler",
   });
   const [submitting, setSubmitting] = useState(false);
@@ -57,10 +59,13 @@ function RegisterContent() {
       .slice(0, 5);
   }, [guests, eventId]);
 
+  const isVip = form.kategori_tamu !== "reguler";
+
   const validate = () => {
     const errs = {};
     if (!form.nama.trim()) errs.nama = "Nama wajib diisi";
-    if (!form.instansi.trim()) errs.instansi = "Instansi wajib diisi";
+    if (!isVip && !form.nama_mahasiswa.trim()) errs.nama_mahasiswa = "Nama mahasiswa wajib diisi untuk tamu reguler";
+    if (!form.alamat.trim()) errs.alamat = "Alamat wajib diisi";
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -80,17 +85,19 @@ function RegisterContent() {
         instansi: form.instansi.trim(),
         no_hp: form.no_hp.trim() || null,
         email: form.email.trim() || null,
+        nama_mahasiswa: isVip ? "-" : form.nama_mahasiswa.trim(),
+        alamat: form.alamat.trim(),
         kategori_tamu: form.kategori_tamu,
       });
       if (result) {
         logActivity({ action: "create_guest", detail: `Registrasi tamu "${form.nama.trim()}" di "${selectedEvent?.nama_acara}"` });
         setToast({ id: Date.now(), message: "Tamu berhasil diregistrasi!", type: "success" });
-        setForm({ nama: "", instansi: "", no_hp: "", email: "", kategori_tamu: "reguler" });
+        setForm({ nama: "", instansi: "", no_hp: "", email: "", nama_mahasiswa: "", alamat: "", kategori_tamu: "reguler" });
       } else {
         setToast({ id: Date.now(), message: "Gagal meregistrasi tamu", type: "error" });
       }
-    } catch {
-      setToast({ id: Date.now(), message: "Terjadi kesalahan server", type: "error" });
+    } catch (err) {
+      setToast({ id: Date.now(), message: err?.message || "Terjadi kesalahan server", type: "error" });
     } finally {
       setSubmitting(false);
     }
@@ -102,20 +109,12 @@ function RegisterContent() {
   };
 
   return (
-    <div className="w-full max-w-[1440px] mx-auto px-6 max-lg:px-5 max-sm:px-4 py-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-foreground tracking-tight">Registrasi Tamu</h1>
-          <p className="text-sm text-muted-foreground mt-1">Tambahkan tamu baru ke dalam acara</p>
-        </div>
-      </div>
-
+    <div className="w-full max-w-[1440px] mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         {/* Left: Form */}
         <div className="lg:col-span-3 space-y-4">
           {/* Event Selector */}
-          <div className="bg-white rounded-xl border border-border p-5">
+          <div className="glass-card rounded-2xl p-5">
             <label className="text-sm font-medium text-foreground mb-2 block">
               Pilih Acara <span className="text-danger">*</span>
             </label>
@@ -141,7 +140,7 @@ function RegisterContent() {
           </div>
 
           {/* Guest Form */}
-          <div className="bg-white rounded-xl border border-border p-5">
+          <div className="glass-card rounded-2xl p-5">
             <h3 className="text-sm font-semibold text-foreground mb-4">Data Tamu</h3>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -157,9 +156,8 @@ function RegisterContent() {
                       placeholder="Masukkan nama tamu"
                       value={form.nama}
                       onChange={(e) => updateField("nama", e.target.value)}
-                      className={`w-full h-10 rounded-lg bg-white border pl-10 pr-3.5 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-ring focus:border-input-focus transition-all ${
-                        errors.nama ? "border-danger" : "border-border"
-                      }`}
+                      className={`w-full h-10 rounded-lg bg-white border pl-10 pr-3.5 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-ring focus:border-input-focus transition-all ${errors.nama ? "border-danger" : "border-border"
+                        }`}
                     />
                   </div>
                   {errors.nama && <p className="text-xs text-danger mt-1">{errors.nama}</p>}
@@ -167,7 +165,7 @@ function RegisterContent() {
 
                 <div>
                   <label htmlFor="instansi" className="text-sm font-medium text-foreground mb-1.5 block">
-                    Instansi <span className="text-danger">*</span>
+                    Instansi <span className="text-xs text-muted-foreground">(Opsional)</span>
                   </label>
                   <div className="relative">
                     <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -177,12 +175,55 @@ function RegisterContent() {
                       placeholder="Masukkan instansi"
                       value={form.instansi}
                       onChange={(e) => updateField("instansi", e.target.value)}
-                      className={`w-full h-10 rounded-lg bg-white border pl-10 pr-3.5 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-ring focus:border-input-focus transition-all ${
-                        errors.instansi ? "border-danger" : "border-border"
-                      }`}
+                      className={`w-full h-10 rounded-lg bg-white border pl-10 pr-3.5 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-ring focus:border-input-focus transition-all ${errors.instansi ? "border-danger" : "border-border"
+                        }`}
                     />
                   </div>
                   {errors.instansi && <p className="text-xs text-danger mt-1">{errors.instansi}</p>}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="nama_mahasiswa" className="text-sm font-medium text-foreground mb-1.5 block">
+                    Nama Mahasiswa {isVip ? "" : <span className="text-danger">*</span>}
+                  </label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <input
+                      id="nama_mahasiswa"
+                      type="text"
+                      placeholder={isVip ? "-" : "Masukkan nama mahasiswa"}
+                      value={isVip ? "-" : form.nama_mahasiswa}
+                      onChange={(e) => updateField("nama_mahasiswa", e.target.value)}
+                      disabled={isVip}
+                      className={`w-full h-10 rounded-lg bg-white border pl-10 pr-3.5 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-ring focus:border-input-focus transition-all disabled:bg-muted/10 disabled:text-muted-foreground ${errors.nama_mahasiswa ? "border-danger" : "border-border"
+                        }`}
+                    />
+                  </div>
+                  {errors.nama_mahasiswa && <p className="text-xs text-danger mt-1">{errors.nama_mahasiswa}</p>}
+                  {isVip && (
+                    <p className="text-xs text-muted-foreground mt-1">Otomatis &quot;-&quot; untuk tamu VIP/VVIP</p>
+                  )}
+                </div>
+
+                <div>
+                  <label htmlFor="alamat" className="text-sm font-medium text-foreground mb-1.5 block">
+                    Alamat Tamu <span className="text-danger">*</span>
+                  </label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <input
+                      id="alamat"
+                      type="text"
+                      placeholder="Masukkan alamat tamu"
+                      value={form.alamat}
+                      onChange={(e) => updateField("alamat", e.target.value)}
+                      className={`w-full h-10 rounded-lg bg-white border pl-10 pr-3.5 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-ring focus:border-input-focus transition-all ${errors.alamat ? "border-danger" : "border-border"
+                        }`}
+                    />
+                  </div>
+                  {errors.alamat && <p className="text-xs text-danger mt-1">{errors.alamat}</p>}
                 </div>
               </div>
 
@@ -263,7 +304,7 @@ function RegisterContent() {
         <div className="lg:col-span-2 space-y-4">
           {/* Selected Event Info */}
           {selectedEvent ? (
-            <div className="bg-white rounded-xl border border-border p-5 space-y-3">
+            <div className="glass-card rounded-2xl p-5 space-y-3">
               <h3 className="text-sm font-semibold text-foreground">Informasi Acara</h3>
               <div className="flex items-start gap-3 p-3 rounded-lg bg-accent-muted border border-accent/10">
                 <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
@@ -287,7 +328,7 @@ function RegisterContent() {
               </div>
             </div>
           ) : (
-            <div className="bg-white rounded-xl border border-border p-5">
+            <div className="glass-card rounded-2xl p-5">
               <div className="flex flex-col items-center justify-center py-6 text-center">
                 <CalendarRange className="w-8 h-8 text-muted-foreground/30 mb-2" />
                 <p className="text-sm text-muted-foreground">Pilih acara untuk melihat informasi</p>
@@ -297,7 +338,7 @@ function RegisterContent() {
 
           {/* Recent Registrations */}
           {eventId && (
-            <div className="bg-white rounded-xl border border-border p-5">
+            <div className="glass-card rounded-2xl p-5">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-sm font-semibold text-foreground">Registrasi Terbaru</h3>
                 <span className="text-xs text-muted-foreground">{recentRegistrations.length} tamu</span>
@@ -314,20 +355,19 @@ function RegisterContent() {
                       key={guest.id}
                       className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-card-hover transition-colors"
                     >
-                      <div className="w-7 h-7 rounded-full bg-accent-muted text-accent flex items-center justify-center text-[10px] font-semibold shrink-0">
+                      <div className="w-7 h-7 rounded-full bg-accent-muted text-accent flex items-center justify-center text-xs font-semibold shrink-0">
                         {guest.nama.split(" ").map((n) => n[0]).join("").slice(0, 2)}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-foreground truncate">{guest.nama}</p>
-                        <p className="text-xs text-muted-foreground truncate">{guest.instansi}</p>
+                        <p className="text-xs text-muted-foreground truncate">{guest.instansi || "—"}</p>
                       </div>
-                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${
-                        guest.status_kehadiran === "hadir" ? "bg-success-light text-success border border-success/20" :
+                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ${guest.status_kehadiran === "hadir" ? "bg-success-light text-success border border-success/20" :
                         guest.status_kehadiran === "terlambat" ? "bg-warning-light text-warning border border-warning/20" :
-                        "bg-muted/10 text-muted-foreground border border-border"
-                      }`}>
+                          "bg-muted/10 text-muted-foreground border border-border"
+                        }`}>
                         {guest.status_kehadiran === "hadir" ? "Hadir" :
-                         guest.status_kehadiran === "terlambat" ? "Terlambat" : "Pending"}
+                          guest.status_kehadiran === "terlambat" ? "Terlambat" : "Pending"}
                       </span>
                     </div>
                   ))}
@@ -340,13 +380,12 @@ function RegisterContent() {
 
       {/* Toast */}
       {toast && (
-        <div className="fixed bottom-6 right-6 z-50">
-          <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border shadow-lg bg-white ${
-            toast.type === "success" ? "border-success/20" : "border-danger/20"
-          }`}>
+        <div className="fixed bottom-4 right-4 left-4 sm:left-auto sm:bottom-6 sm:right-6 z-50 flex justify-end">
+          <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border shadow-lg bg-white w-full sm:w-auto ${toast.type === "success" ? "border-success/20" : "border-danger/20"
+            }`}>
             <CheckCircle className={`w-5 h-5 ${toast.type === "success" ? "text-success" : "text-danger"}`} />
-            <p className="text-sm font-medium text-foreground">{toast.message}</p>
-            <button onClick={() => setToast(null)} className="text-muted-foreground hover:text-foreground cursor-pointer">
+            <p className="text-sm font-medium text-foreground flex-1 sm:flex-initial">{toast.message}</p>
+            <button onClick={() => setToast(null)} className="text-muted-foreground hover:text-foreground cursor-pointer shrink-0">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>

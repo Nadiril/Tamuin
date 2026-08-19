@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import Input from "./Input";
 import Button from "./Button";
 import { QRCodeCanvas } from "qrcode.react";
+import { formatTime as formatTimeWIB } from "@/lib/format-time";
 
 const kategoriMap = {
   reguler: { badge: "bg-info-muted text-info border border-info/20", label: "Reguler" },
@@ -81,19 +82,16 @@ export default function GuestTable({ guests, showEvent = false, events = [], onE
 
   const filtered = guests.filter((g) => {
     const matchSearch =
-      g.nama.toLowerCase().includes(search.toLowerCase()) ||
-      g.instansi.toLowerCase().includes(search.toLowerCase()) ||
+      (g.nama || "").toLowerCase().includes(search.toLowerCase()) ||
+      (g.instansi || "").toLowerCase().includes(search.toLowerCase()) ||
+      (g.nama_mahasiswa || "").toLowerCase().includes(search.toLowerCase()) ||
+      (g.alamat || "").toLowerCase().includes(search.toLowerCase()) ||
       (g.no_hp || "").includes(search);
     const matchKategori = !kategoriFilter || g.kategori_tamu === kategoriFilter;
     return matchSearch && matchKategori;
   });
 
-  const formatTime = (dateStr) => {
-    return new Date(dateStr).toLocaleTimeString("id-ID", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
+  const formatTime = (dateStr) => formatTimeWIB(dateStr);
 
   const formatDate = (dateStr) => {
     return new Date(dateStr).toLocaleDateString("id-ID", {
@@ -104,7 +102,7 @@ export default function GuestTable({ guests, showEvent = false, events = [], onE
   };
 
   const hasActions = !!(onEdit || onDelete);
-  const cols = (showEvent ? 7 : 6) + (hasActions ? 1 : 0);
+  const cols = (showEvent ? 9 : 8) + (hasActions ? 1 : 0);
 
   const handleSendQR = async (guest) => {
     if (!guest.email) {
@@ -168,7 +166,7 @@ export default function GuestTable({ guests, showEvent = false, events = [], onE
           <select
             value={kategoriFilter}
             onChange={(e) => setKategoriFilter(e.target.value)}
-            className="w-full sm:w-44 rounded-xl bg-input border border-input-border px-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-input-focus transition-all duration-200"
+            className="w-full sm:w-44 h-10 rounded-[10px] bg-surface border border-input-border px-4 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-input-focus transition-all duration-200"
           >
             <option value="">Semua Kategori</option>
             <option value="reguler">Reguler</option>
@@ -183,37 +181,161 @@ export default function GuestTable({ guests, showEvent = false, events = [], onE
         </p>
       </div>
 
-      {/* Table */}
-      <div className="glass-card rounded-2xl overflow-hidden">
+      {/* Card Layout for Mobile & Tablet Portrait */}
+      <div className="grid grid-cols-1 gap-4 lg:hidden">
+        {filtered.length === 0 ? (
+          <div className="glass-card rounded-2xl p-8 text-center text-muted text-sm">
+            <div className="flex flex-col items-center gap-3">
+              <svg
+                className="w-14 h-14 text-muted/30"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.2}
+                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+              </svg>
+              <p className="text-foreground/60 font-medium">Belum ada data tamu.</p>
+            </div>
+          </div>
+        ) : (
+          filtered.map((guest) => (
+            <div key={guest.id} className="glass-card rounded-2xl p-4 flex flex-col gap-3 relative border border-border/50">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-9 h-9 rounded-full bg-accent-muted text-accent flex items-center justify-center text-xs font-bold shrink-0">
+                    {guest.nama
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")
+                      .slice(0, 2)}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-foreground truncate" title={guest.nama}>
+                      {guest.nama}
+                    </p>
+                    <p className="text-xs text-muted truncate" title={guest.instansi}>
+                      {guest.instansi || "—"}
+                    </p>
+                  </div>
+                </div>
+                {hasActions && (
+                  <button
+                    onClick={(e) => toggleMenu(guest.id, e)}
+                    className="p-1.5 min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg text-muted hover:text-foreground hover:bg-input/50 transition-all cursor-pointer shrink-0"
+                    title="Aksi"
+                  >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs border-t border-border/30 pt-3">
+                {guest.nama_mahasiswa && guest.nama_mahasiswa !== "-" && (
+                  <div>
+                    <span className="text-muted block mb-0.5">Nama Mahasiswa</span>
+                    <span className="text-foreground font-medium block truncate">{guest.nama_mahasiswa}</span>
+                  </div>
+                )}
+                {guest.alamat && (
+                  <div>
+                    <span className="text-muted block mb-0.5">Alamat</span>
+                    <span className="text-foreground font-medium block truncate" title={guest.alamat}>{guest.alamat}</span>
+                  </div>
+                )}
+                <div>
+                  <span className="text-muted block mb-0.5">Kategori</span>
+                  <span
+                    className={`text-xs font-semibold px-2 py-0.5 rounded-full inline-block ${
+                      (kategoriMap[guest.kategori_tamu] || kategoriMap.reguler).badge
+                    }`}
+                  >
+                    {(kategoriMap[guest.kategori_tamu] || kategoriMap.reguler).label}
+                  </span>
+                </div>
+                {showEvent && (
+                  <div>
+                    <span className="text-muted block mb-0.5">Acara</span>
+                    <span className="text-xs bg-accent-muted text-accent px-2 py-0.5 rounded-full font-medium inline-block truncate max-w-[120px]" title={getEventName(guest.acara_id)}>
+                      {getEventName(guest.acara_id)}
+                    </span>
+                  </div>
+                )}
+                <div>
+                  <span className="text-muted block mb-0.5">No. HP</span>
+                  <span className="text-foreground font-medium font-mono">{guest.no_hp || "—"}</span>
+                </div>
+                <div>
+                  <span className="text-muted block mb-0.5">Status Kehadiran</span>
+                  <span
+                    className={`text-xs font-semibold px-2 py-0.5 rounded-full inline-block ${
+                      (statusKehadiranMap[guest.status_kehadiran] || statusKehadiranMap.hadir).badge
+                    }`}
+                  >
+                    {(statusKehadiranMap[guest.status_kehadiran] || statusKehadiranMap.hadir).label}
+                  </span>
+                </div>
+                <div className="col-span-2 border-t border-border/30 pt-2 flex items-center justify-between">
+                  <span className="text-muted">Waktu Kehadiran</span>
+                  {guest.status_kehadiran === "tidak_hadir" ? (
+                    <span className="text-foreground/80 font-medium">—</span>
+                  ) : guest.waktu_kedatangan ? (
+                    <span className="text-foreground/80 font-medium">
+                      {formatTime(guest.waktu_kedatangan)} ({formatDate(guest.waktu_kedatangan)})
+                    </span>
+                  ) : (
+                    <span className="text-foreground/80 font-medium">—</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Table (desktop & tablet landscape) */}
+      <div className="hidden lg:block glass-card rounded-2xl overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[700px]">
+          <table className="w-full min-w-[1050px]">
             <thead>
-              <tr className="border-b border-border">
-                <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-5 py-3.5 w-[22%]">
+              <tr className="border-b border-outline-variant bg-surface-variant/60">
+                <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-5 py-3 whitespace-nowrap">
                   Nama
                 </th>
-                <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-5 py-3.5 w-[18%]">
+                <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-5 py-3 whitespace-nowrap">
                   Instansi
                 </th>
-                <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-5 py-3.5 w-[13%]">
+                <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-5 py-3 whitespace-nowrap">
+                  Nama Mahasiswa
+                </th>
+                <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-5 py-3 whitespace-nowrap">
+                  Alamat
+                </th>
+                <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-5 py-3 whitespace-nowrap">
                   Kategori
                 </th>
                 {showEvent && (
-                  <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-5 py-3.5 w-[20%]">
+                  <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-5 py-3 whitespace-nowrap">
                     Acara
                   </th>
                 )}
-                <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-5 py-3.5 w-[13%]">
+                <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-5 py-3 whitespace-nowrap">
                   No. HP
                 </th>
-                <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-5 py-3.5 w-[15%]">
+                <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-5 py-3 whitespace-nowrap">
                   Status Kehadiran
                 </th>
-                <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-5 py-3.5 w-[15%]">
+                <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-5 py-3 whitespace-nowrap">
                   Jam Hadir
                 </th>
                 {hasActions && (
-                  <th className="text-right text-xs font-semibold text-muted uppercase tracking-wider px-5 py-3.5 w-[10%]">
+                  <th className="text-right text-xs font-semibold text-muted uppercase tracking-wider px-5 py-3 whitespace-nowrap">
                     Aksi
                   </th>
                 )}
@@ -272,7 +394,23 @@ export default function GuestTable({ guests, showEvent = false, events = [], onE
                         className="text-sm text-muted block truncate max-w-[160px] lg:max-w-[220px]"
                         title={guest.instansi}
                       >
-                        {guest.instansi}
+                        {guest.instansi || "—"}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <span
+                        className="text-sm text-foreground/80 block truncate max-w-[160px]"
+                        title={guest.nama_mahasiswa || "-"}
+                      >
+                        {guest.nama_mahasiswa || "-"}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <span
+                        className="text-sm text-muted block truncate max-w-[180px]"
+                        title={guest.alamat || "—"}
+                      >
+                        {guest.alamat || "—"}
                       </span>
                     </td>
                     <td className="px-5 py-3.5">
@@ -345,7 +483,7 @@ export default function GuestTable({ guests, showEvent = false, events = [], onE
         <div
           ref={menuRef}
           style={{ position: "fixed", top: menuPos.top, left: menuPos.left, zIndex: 60 }}
-          className="w-48 glass-card rounded-xl py-1.5 shadow-xl border border-border"
+          className="w-48 glass-card rounded-xl py-1.5 shadow-[var(--shadow-dialog)] border border-outline-variant"
         >
           <button
             onClick={() => {
@@ -424,8 +562,8 @@ export default function GuestTable({ guests, showEvent = false, events = [], onE
       {detailGuest && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setDetailGuest(null)}></div>
-          <div className="relative glass-card rounded-2xl p-6 sm:p-8 w-full max-w-md mx-4 glow-accent">
-            <div className="flex items-center justify-between mb-6">
+          <div className="relative glass-card rounded-2xl p-6 sm:p-8 w-full max-w-md mx-4 glow-accent max-h-[90vh] flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between mb-6 shrink-0">
               <h3 className="text-lg font-bold text-foreground">Detail Tamu</h3>
               <button onClick={() => setDetailGuest(null)} className="text-muted hover:text-foreground transition-colors p-1 cursor-pointer">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -433,14 +571,14 @@ export default function GuestTable({ guests, showEvent = false, events = [], onE
                 </svg>
               </button>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-4 overflow-y-auto flex-1 pr-1">
               <div className="flex items-center gap-3 pb-4 border-b border-border/50">
                 <div className="w-12 h-12 rounded-full bg-accent-muted text-accent flex items-center justify-center text-lg font-bold shrink-0">
                   {detailGuest.nama.split(" ").map((n) => n[0]).join("").slice(0, 2)}
                 </div>
                 <div>
                   <p className="font-semibold text-foreground">{detailGuest.nama}</p>
-                  <p className="text-sm text-muted">{detailGuest.instansi}</p>
+                  <p className="text-sm text-muted">{detailGuest.instansi || "—"}</p>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4 text-sm">
@@ -455,6 +593,14 @@ export default function GuestTable({ guests, showEvent = false, events = [], onE
                   }`}>
                     {(kategoriMap[detailGuest.kategori_tamu] || kategoriMap.reguler).label}
                   </span>
+                </div>
+                <div>
+                  <p className="text-muted text-xs mb-0.5">Nama Mahasiswa</p>
+                  <p className="text-foreground font-medium">{detailGuest.nama_mahasiswa || "-"}</p>
+                </div>
+                <div>
+                  <p className="text-muted text-xs mb-0.5">Alamat</p>
+                  <p className="text-foreground font-medium">{detailGuest.alamat || "—"}</p>
                 </div>
                 <div>
                   <p className="text-muted text-xs mb-0.5">Acara</p>
@@ -478,7 +624,7 @@ export default function GuestTable({ guests, showEvent = false, events = [], onE
                 </div>
               </div>
             </div>
-            <div className="flex justify-end pt-4">
+            <div className="flex justify-end pt-4 shrink-0 border-t border-border/20">
               <Button type="button" onClick={() => setDetailGuest(null)}>Tutup</Button>
             </div>
           </div>
@@ -487,7 +633,7 @@ export default function GuestTable({ guests, showEvent = false, events = [], onE
 
       {/* Email Status Toast */}
       {emailStatus && (
-        <div className="fixed bottom-6 right-6 z-[60] animate-in">
+        <div className="fixed bottom-4 right-4 left-4 sm:left-auto sm:bottom-6 sm:right-6 z-[60] flex justify-end animate-in">
           <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border shadow-lg bg-white ${
             emailStatus.type === "success" ? "border-success/20" : "border-danger/20"
           }`}>
@@ -507,8 +653,8 @@ export default function GuestTable({ guests, showEvent = false, events = [], onE
       {qrGuest && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setQrGuest(null)}></div>
-          <div className="relative glass-card rounded-2xl p-6 sm:p-8 w-full max-w-sm mx-4 glow-accent text-center">
-            <div className="flex items-center justify-between mb-4">
+          <div className="relative glass-card rounded-2xl p-6 sm:p-8 w-full max-w-sm mx-4 glow-accent text-center max-h-[90vh] flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between mb-4 shrink-0">
               <h3 className="text-lg font-bold text-foreground">QR Code Tamu</h3>
               <button onClick={() => setQrGuest(null)} className="text-muted hover:text-foreground transition-colors p-1 cursor-pointer">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -516,20 +662,22 @@ export default function GuestTable({ guests, showEvent = false, events = [], onE
                 </svg>
               </button>
             </div>
-            <p className="text-sm font-medium text-foreground mb-1">{qrGuest.nama}</p>
-            <p className="text-xs text-muted mb-4">{getEventName(qrGuest.acara_id)}</p>
-            <div className="bg-white rounded-xl p-3 inline-block mx-auto">
-              <QRCodeCanvas
-                ref={qrCanvasRef}
-                value={getQrUrl(qrGuest.qr_token)}
-                size={192}
-                bgColor="#ffffff"
-                fgColor="#000000"
-                level="M"
-                marginSize={2}
-              />
+            <div className="overflow-y-auto flex-1 py-2 space-y-2 pr-1">
+              <p className="text-sm font-medium text-foreground mb-1">{qrGuest.nama}</p>
+              <p className="text-xs text-muted mb-4">{getEventName(qrGuest.acara_id)}</p>
+              <div className="bg-white rounded-xl p-3 inline-block mx-auto">
+                <QRCodeCanvas
+                  ref={qrCanvasRef}
+                  value={getQrUrl(qrGuest.qr_token)}
+                  size={192}
+                  bgColor="#ffffff"
+                  fgColor="#000000"
+                  level="M"
+                  marginSize={2}
+                />
+              </div>
             </div>
-            <div className="flex gap-3 pt-4">
+            <div className="flex gap-3 pt-4 shrink-0 border-t border-border/20">
               <Button
                 type="button"
                 variant="secondary"

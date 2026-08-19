@@ -1,5 +1,5 @@
-import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { requireUser } from "@/lib/api-helpers";
 
 //
 // scan/[token] — authenticated panitia/admin scan endpoint
@@ -18,11 +18,8 @@ export async function POST(request, { params }) {
   const { token } = await params;
 
   // 1. Verify authentication (register_guest_scan checks role internally)
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const { supabase, user, response } = await requireUser();
+  if (response) return response;
 
   // 2. Call the SECURITY DEFINER function that handles all validation
   //    p_caller_id is passed explicitly (not relying on auth.uid() inside the function)

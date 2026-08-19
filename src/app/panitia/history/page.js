@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { useGuestsQuery } from "@/lib/queries/useGuestsQuery";
 import { useEventsQuery } from "@/lib/queries/useEventsQuery";
+import { formatTime as formatTimeWIB } from "@/lib/format-time";
 import {
   Search,
   Users,
@@ -50,8 +51,10 @@ export default function HistoryPage() {
   const filtered = useMemo(() => {
     return guests.filter((g) => {
       const matchSearch =
-        g.nama.toLowerCase().includes(search.toLowerCase()) ||
-        g.instansi.toLowerCase().includes(search.toLowerCase()) ||
+        (g.nama || "").toLowerCase().includes(search.toLowerCase()) ||
+        (g.instansi || "").toLowerCase().includes(search.toLowerCase()) ||
+        (g.nama_mahasiswa || "").toLowerCase().includes(search.toLowerCase()) ||
+        (g.alamat || "").toLowerCase().includes(search.toLowerCase()) ||
         (g.no_hp || "").includes(search);
       const matchEvent = eventFilter === "all" || g.acara_id === parseInt(eventFilter);
       const matchStatus = statusFilter === "all" || g.status_kehadiran === statusFilter;
@@ -63,13 +66,7 @@ export default function HistoryPage() {
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
   const paginated = filtered.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
 
-  const formatTime = (dateStr) => {
-    if (!dateStr) return "—";
-    return new Date(dateStr).toLocaleTimeString("id-ID", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
+  const formatTime = (dateStr) => formatTimeWIB(dateStr);
 
   const formatDate = (dateStr) => {
     if (!dateStr) return "";
@@ -81,16 +78,11 @@ export default function HistoryPage() {
   };
 
   return (
-    <div className="w-full max-w-[1440px] mx-auto px-6 max-lg:px-5 max-sm:px-4 py-6 space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-xl font-bold text-foreground tracking-tight">Riwayat Registrasi</h1>
-        <p className="text-sm text-muted-foreground mt-1">Daftar seluruh tamu yang telah diregistrasi</p>
-      </div>
+    <div className="w-full max-w-[1440px] mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1 max-w-sm">
+      <div className="flex flex-col md:flex-row gap-3">
+        <div className="relative w-full md:max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
             type="text"
@@ -103,7 +95,7 @@ export default function HistoryPage() {
         <select
           value={eventFilter}
           onChange={(e) => { setEventFilter(e.target.value); setPage(1); }}
-          className="h-10 rounded-lg bg-white border border-border px-3.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-input-focus transition-all"
+          className="w-full md:w-auto h-10 rounded-lg bg-white border border-border px-3.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-input-focus transition-all cursor-pointer"
         >
           <option value="all">Semua Acara</option>
           {events.map((e) => (
@@ -113,7 +105,7 @@ export default function HistoryPage() {
         <select
           value={statusFilter}
           onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-          className="h-10 rounded-lg bg-white border border-border px-3.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-input-focus transition-all"
+          className="w-full md:w-auto h-10 rounded-lg bg-white border border-border px-3.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-input-focus transition-all cursor-pointer"
         >
           <option value="all">Semua Status</option>
           <option value="hadir">Hadir</option>
@@ -123,7 +115,7 @@ export default function HistoryPage() {
         <select
           value={kategoriFilter}
           onChange={(e) => { setKategoriFilter(e.target.value); setPage(1); }}
-          className="h-10 rounded-lg bg-white border border-border px-3.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-input-focus transition-all"
+          className="w-full md:w-auto h-10 rounded-lg bg-white border border-border px-3.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-input-focus transition-all cursor-pointer"
         >
           <option value="">Semua Kategori</option>
           <option value="reguler">Reguler</option>
@@ -139,25 +131,120 @@ export default function HistoryPage() {
         </p>
       </div>
 
+      {/* Card Layout for Mobile */}
+      <div className="grid grid-cols-1 gap-4 md:hidden">
+        {paginated.length === 0 ? (
+          <div className="glass-card rounded-2xl p-8 text-center text-muted-foreground text-sm">
+            <div className="flex flex-col items-center gap-3">
+              <Users className="w-12 h-12 text-muted-foreground/30" />
+              <p className="text-sm text-muted-foreground">Belum ada data tamu</p>
+            </div>
+          </div>
+        ) : (
+          paginated.map((guest) => (
+            <div key={guest.id} className="glass-card rounded-2xl p-4 flex flex-col gap-3 relative">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-9 h-9 rounded-full bg-accent-muted text-accent flex items-center justify-center text-xs font-semibold shrink-0">
+                    {guest.nama.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-foreground truncate">{guest.nama}</p>
+                    <p className="text-xs text-muted-foreground truncate">{guest.instansi || "—"}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setDetailGuest(guest)}
+                  className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-card-hover transition-colors cursor-pointer shrink-0"
+                  title="Detail"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs border-t border-border/50 pt-3">
+                {guest.nama_mahasiswa && guest.nama_mahasiswa !== "-" && (
+                  <div>
+                    <span className="text-muted-foreground block mb-0.5">Nama Mahasiswa</span>
+                    <span className="text-foreground font-medium block truncate">{guest.nama_mahasiswa}</span>
+                  </div>
+                )}
+                {guest.alamat && (
+                  <div>
+                    <span className="text-muted-foreground block mb-0.5">Alamat</span>
+                    <span className="text-foreground font-medium block truncate" title={guest.alamat}>{guest.alamat}</span>
+                  </div>
+                )}
+                <div>
+                  <span className="text-muted-foreground block mb-0.5">Kategori</span>
+                  <span
+                    className={`text-xs font-semibold px-2 py-0.5 rounded-full inline-block ${
+                      (kategoriMap[guest.kategori_tamu] || kategoriMap.reguler).badge
+                    }`}
+                  >
+                    {(kategoriMap[guest.kategori_tamu] || kategoriMap.reguler).label}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground block mb-0.5">Acara</span>
+                  <span className="text-xs bg-accent-muted text-accent px-2 py-0.5 rounded-full font-medium inline-block truncate max-w-[120px]" title={getEventName(guest.acara_id)}>
+                    {getEventName(guest.acara_id)}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground block mb-0.5">No. HP</span>
+                  <span className="text-foreground font-medium font-mono">{guest.no_hp || "—"}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground block mb-0.5">Status Kehadiran</span>
+                  <span
+                    className={`text-xs font-semibold px-2 py-0.5 rounded-full inline-block ${
+                      (statusKehadiranMap[guest.status_kehadiran] || statusKehadiranMap.tidak_hadir).badge
+                    }`}
+                  >
+                    {(statusKehadiranMap[guest.status_kehadiran] || statusKehadiranMap.tidak_hadir).label}
+                  </span>
+                </div>
+                <div className="col-span-2 border-t border-border/50 pt-2 flex items-center justify-between">
+                  <span className="text-muted-foreground">Waktu Kehadiran</span>
+                  {guest.status_kehadiran !== "tidak_hadir" && guest.waktu_kedatangan ? (
+                    <span className="text-foreground font-medium">
+                      {formatTime(guest.waktu_kedatangan)} ({formatDate(guest.waktu_kedatangan)})
+                    </span>
+                  ) : (
+                    <span className="text-foreground font-medium">—</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
       {/* Table */}
-      <div className="bg-white rounded-xl border border-border overflow-hidden">
+      <div className="hidden md:block glass-card rounded-2xl overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[800px]">
+          <table className="w-full min-w-[1150px]">
             <thead>
               <tr className="border-b border-border bg-card-hover/50">
-                <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-5 py-3.5 w-[20%]">Nama</th>
-                <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-5 py-3.5 w-[16%]">Instansi</th>
-                <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-5 py-3.5 w-[16%]">Acara</th>
-                <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-5 py-3.5 w-[12%]">Kategori</th>
-                <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-5 py-3.5 w-[14%]">Status</th>
-                <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-5 py-3.5 w-[14%]">Jam Hadir</th>
-                <th className="text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider px-5 py-3.5 w-[8%]">Detail</th>
+                <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-5 py-3.5 whitespace-nowrap">Nama</th>
+                <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-5 py-3.5 whitespace-nowrap">Instansi</th>
+                <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-5 py-3.5 whitespace-nowrap">Nama Mahasiswa</th>
+                <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-5 py-3.5 whitespace-nowrap">Alamat</th>
+                <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-5 py-3.5 whitespace-nowrap">Kategori</th>
+                <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-5 py-3.5 whitespace-nowrap">Acara</th>
+                <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-5 py-3.5 whitespace-nowrap">No. HP</th>
+                <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-5 py-3.5 whitespace-nowrap">Status</th>
+                <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-5 py-3.5 whitespace-nowrap">Jam Hadir</th>
+                <th className="text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider px-5 py-3.5 whitespace-nowrap">Detail</th>
               </tr>
             </thead>
             <tbody>
               {paginated.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-16">
+                  <td colSpan={10} className="text-center py-16">
                     <div className="flex flex-col items-center gap-3">
                       <Users className="w-12 h-12 text-muted-foreground/30" />
                       <p className="text-sm text-muted-foreground">Belum ada data tamu</p>
@@ -178,11 +265,16 @@ export default function HistoryPage() {
                       </div>
                     </td>
                     <td className="px-5 py-3.5 text-sm text-muted-foreground truncate max-w-[160px]">
-                      {guest.instansi}
+                      {guest.instansi || "—"}
                     </td>
                     <td className="px-5 py-3.5">
-                      <span className="text-xs bg-accent-muted text-accent px-2.5 py-1 rounded-full font-medium inline-block truncate max-w-[180px]">
-                        {getEventName(guest.acara_id)}
+                      <span className="text-sm text-foreground/80 block truncate max-w-[160px]" title={guest.nama_mahasiswa || "-"}>
+                        {guest.nama_mahasiswa || "-"}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <span className="text-sm text-muted-foreground block truncate max-w-[180px]" title={guest.alamat || "—"}>
+                        {guest.alamat || "—"}
                       </span>
                     </td>
                     <td className="px-5 py-3.5">
@@ -191,6 +283,14 @@ export default function HistoryPage() {
                       }`}>
                         {(kategoriMap[guest.kategori_tamu] || kategoriMap.reguler).label}
                       </span>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <span className="text-xs bg-accent-muted text-accent px-2.5 py-1 rounded-full font-medium inline-block truncate max-w-[180px]">
+                        {getEventName(guest.acara_id)}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3.5 text-sm text-muted-foreground font-mono">
+                      {guest.no_hp || "—"}
                     </td>
                     <td className="px-5 py-3.5">
                       <span className={`text-xs font-semibold px-2.5 py-1 rounded-full inline-block whitespace-nowrap ${
@@ -274,24 +374,32 @@ export default function HistoryPage() {
       {detailGuest && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setDetailGuest(null)} />
-          <div className="relative bg-white rounded-xl border border-border shadow-xl w-full max-w-md mx-4 overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+          <div className="relative glass-card rounded-2xl shadow-xl w-full max-w-md mx-4 max-h-[90vh] flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border shrink-0">
               <h3 className="text-sm font-semibold text-foreground">Detail Tamu</h3>
               <button onClick={() => setDetailGuest(null)} className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-card-hover transition-colors cursor-pointer">
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="p-5 space-y-4">
+            <div className="p-5 space-y-4 overflow-y-auto flex-1 pr-1 pb-4">
               <div className="flex items-center gap-3 pb-3 border-b border-border/50">
                 <div className="w-10 h-10 rounded-full bg-accent-muted text-accent flex items-center justify-center text-sm font-semibold shrink-0">
                   {detailGuest.nama.split(" ").map((n) => n[0]).join("").slice(0, 2)}
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-foreground">{detailGuest.nama}</p>
-                  <p className="text-xs text-muted-foreground">{detailGuest.instansi}</p>
+                  <p className="text-xs text-muted-foreground">{detailGuest.instansi || "—"}</p>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="p-3 rounded-lg bg-card-hover">
+                  <p className="text-xs text-muted-foreground mb-0.5">Nama Mahasiswa</p>
+                  <p className="font-medium text-foreground">{detailGuest.nama_mahasiswa || "-"}</p>
+                </div>
+                <div className="p-3 rounded-lg bg-card-hover">
+                  <p className="text-xs text-muted-foreground mb-0.5">Alamat</p>
+                  <p className="font-medium text-foreground text-xs">{detailGuest.alamat || "—"}</p>
+                </div>
                 <div className="p-3 rounded-lg bg-card-hover">
                   <p className="text-xs text-muted-foreground mb-0.5">No. HP</p>
                   <p className="font-medium text-foreground">{detailGuest.no_hp || "—"}</p>

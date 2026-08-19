@@ -1,29 +1,12 @@
 import { createPublicClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { createRateLimiter } from "@/lib/api-helpers";
 
-const rateLimitMap = new Map();
-const RATE_WINDOW = 60000;
-const RATE_MAX = 10;
-
-function checkRateLimit(ip) {
-  const now = Date.now();
-  const entry = rateLimitMap.get(ip);
-  if (!entry || now - entry.start > RATE_WINDOW) {
-    rateLimitMap.set(ip, { start: now, count: 1 });
-    return true;
-  }
-  entry.count++;
-  return entry.count <= RATE_MAX;
-}
+const checkEmailRateLimit = createRateLimiter({ max: 10 });
 
 export async function GET(request) {
-  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
-    || request.headers.get("x-real-ip")
-    || "unknown";
-
-  if (!checkRateLimit(ip)) {
-    return NextResponse.json({ error: "Terlalu banyak permintaan" }, { status: 429 });
-  }
+  const rateLimitResponse = checkEmailRateLimit(request);
+  if (rateLimitResponse) return rateLimitResponse;
 
   const { searchParams } = new URL(request.url);
   const email = searchParams.get("email");

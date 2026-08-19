@@ -2,21 +2,7 @@ import { createServiceClient } from "@/lib/supabase/server";
 import { computeAttendanceStatus } from "@/lib/event-status";
 import { NextResponse } from "next/server";
 import { generateToken } from "@/lib/token";
-
-function validate(field, label, maxLength = 200) {
-  if (!field || typeof field !== "string" || !field.trim()) {
-    return `${label} wajib diisi`;
-  }
-  if (field.trim().length > maxLength) {
-    return `${label} maksimal ${maxLength} karakter`;
-  }
-  return null;
-}
-
-function sanitize(value) {
-  if (typeof value !== "string") return "";
-  return value.trim().replace(/<[^>]*>/g, "").slice(0, 500);
-}
+import { sanitize, validate } from "@/lib/api-helpers";
 
 export async function POST(request) {
   try {
@@ -25,9 +11,10 @@ export async function POST(request) {
     const nama = sanitize(body.nama);
     const instansi = sanitize(body.instansi);
     const tujuan = body.tujuan ? sanitize(body.tujuan) : null;
-    const no_hp = body.no_hp ? sanitize(body.no_hp) : null;
+    const no_hp = body.no_hp ? sanitize(body.no_hp).slice(0, 20) : null;
+    const alamat = sanitize(body.alamat);
 
-    const err = validate(nama, "Nama") || validate(instansi, "Instansi");
+    const err = validate(nama, "Nama") || validate(alamat, "Alamat");
     if (err) return NextResponse.json({ error: err }, { status: 400 });
 
     if (!acara_id || isNaN(Number(acara_id))) {
@@ -56,21 +43,57 @@ export async function POST(request) {
       return NextResponse.json({ error: "Acara sudah selesai" }, { status: 400 });
     }
 
+    const acaraId = Number(acara_id);
+    const fields = ["id", "nama", "instansi", "status_kehadiran", "waktu_kedatangan"];
+
+    // Cegah duplikat: HP/email cocok = orang yang sama → balas data lama (idempoten)
+    let existing = null;
+    if (no_hp) {
+      const { data: dup } = await supabase
+        .from("guests")
+        .select(fields.join(", "))
+        .eq("acara_id", acaraId)
+        .eq("no_hp", no_hp)
+        .limit(1);
+      existing = dup && dup.length > 0 ? dup[0] : null;
+    }
+    // Tanpa HP/email, gunakan nama sebagai petunjuk untuk mencegah submit ganda
+    if (!existing) {
+      const namePattern = nama.replace(/[\\%_]/g, (m) => "\\" + m);
+      const { data: dup } = await supabase
+        .from("guests")
+        .select(fields.join(", "))
+        .eq("acara_id", acaraId)
+        .ilike("nama", namePattern)
+        .limit(1);
+      existing = dup && dup.length > 0 ? dup[0] : null;
+    }
+    if (existing) {
+      return NextResponse.json({ ...existing, already_registered: true }, { status: 200 });
+    }
+
     const guest = {
       nama,
-      instansi,
+      instansi: instansi || null,
       tujuan,
       no_hp,
+      nama_mahasiswa: nama,
+      alamat,
       kategori_tamu: "reguler",
       status_kehadiran,
       waktu_kedatangan: now.toISOString(),
-      acara_id: Number(acara_id),
+      acara_id: acaraId,
       qr_token: generateToken(),
     };
 
-    const { data, error } = await supabase.from("guests").insert([guest]).select("id, nama, instansi, status_kehadiran, waktu_kedatangan").single();
+    const { data, error } = await supabase.from("guests").insert([guest]).select(fields.join(", ")).single();
 
-    if (error) return NextResponse.json({ error: "Gagal mendaftarkan tamu" }, { status: 500 });
+    if (error) {
+      if (error.code === "23505") {
+        return NextResponse.json({ error: "Anda sudah terdaftar di acara ini" }, { status: 409 });
+      }
+      return NextResponse.json({ error: "Gagal mendaftarkan tamu" }, { status: 500 });
+    }
     return NextResponse.json(data, { status: 201 });
   } catch (err) {
     return NextResponse.json({ error: "Data tidak valid" }, { status: 400 });

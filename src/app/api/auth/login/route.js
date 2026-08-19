@@ -1,40 +1,16 @@
 import { createClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { createRateLimiter } from "@/lib/api-helpers";
 
-const rateLimitMap = new Map();
-const RATE_WINDOW = 60000;
-const RATE_MAX = 10;
-
-function getClientIp(request) {
-  return request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
-    || request.headers.get("x-real-ip")
-    || "unknown";
-}
-
-function checkRateLimit(ip) {
-  const now = Date.now();
-  const entry = rateLimitMap.get(ip);
-  if (!entry || now - entry.start > RATE_WINDOW) {
-    rateLimitMap.set(ip, { start: now, count: 1 });
-    return true;
-  }
-  entry.count++;
-  return entry.count <= RATE_MAX;
-}
-
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, val] of rateLimitMap) {
-    if (now - val.start > RATE_WINDOW * 2) rateLimitMap.delete(key);
-  }
-}, RATE_WINDOW * 2);
+const loginRateLimit = createRateLimiter({
+  max: 10,
+  message: "Terlalu banyak percobaan login. Coba lagi nanti.",
+});
 
 export async function POST(request) {
-  const ip = getClientIp(request);
-  if (!checkRateLimit(ip)) {
-    return NextResponse.json({ error: "Terlalu banyak percobaan login. Coba lagi nanti." }, { status: 429 });
-  }
+  const rateLimitResponse = loginRateLimit(request);
+  if (rateLimitResponse) return rateLimitResponse;
 
   try {
     const { email, password, remember } = await request.json();
@@ -67,9 +43,18 @@ export async function POST(request) {
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("id, display_name, role")
+      .select("id, display_name, role, status")
       .eq("id", data.user.id)
       .single();
+
+    if (!profile || profile.status !== "active") {
+      await supabase.auth.signOut();
+      const message =
+        profile?.status === "pending"
+          ? "Akun Anda masih menunggu persetujuan administrator."
+          : "Akun Anda belum dapat digunakan.";
+      return NextResponse.json({ error: message }, { status: 403 });
+    }
 
     return NextResponse.json({
       id: data.user.id,

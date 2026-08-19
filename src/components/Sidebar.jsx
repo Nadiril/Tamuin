@@ -94,18 +94,19 @@ export default function Sidebar() {
           <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center overflow-hidden shadow-lg shadow-accent/20 shrink-0">
             <Image
               src="/Logo.webp"
-              alt="Buku Tamu Digital"
+              alt="Tamuin"
               width={collapsed ? 36 : 40}
-              height={collapsed ? 36 : 40}
-              className="object-contain w-full h-full"
+              height={collapsed ? 29 : 32}
+              className="object-contain w-full"
+              style={{ height: "auto" }}
               priority
               unoptimized
             />
           </div>
           {!collapsed && (
             <div>
-              <h1 className="text-sm font-bold text-foreground leading-tight tracking-tight">Buku Tamu Digital</h1>
-              <p className="text-[10px] text-muted font-medium">Panel Admin</p>
+              <h1 className="text-sm font-bold text-foreground leading-tight tracking-tight">Tamuin</h1>
+              <p className="text-xs text-muted font-medium">Panel Admin</p>
             </div>
           )}
         </Link>
@@ -114,7 +115,7 @@ export default function Sidebar() {
       {/* Navigation */}
       <nav className={`flex-1 overflow-y-auto py-4 space-y-1 ${collapsed ? "px-2" : "px-3"}`}>
         {!collapsed && (
-          <p className="px-3 mb-3 text-[10px] font-semibold text-muted uppercase tracking-widest">
+          <p className="px-3 mb-3 text-xs font-semibold text-muted uppercase tracking-widest">
             Menu Utama
           </p>
         )}
@@ -127,11 +128,11 @@ export default function Sidebar() {
               href={item.href}
               onClick={() => setMobileOpen(false)}
               className={`flex items-center gap-3 rounded-xl text-sm font-medium transition-all duration-200 group
-                ${collapsed ? "justify-center py-3" : "px-3 py-2.5"}
+                ${collapsed ? "justify-center py-3" : "px-3 py-3"}
                 ${
                   isActive
-                    ? "bg-accent/10 text-accent border border-accent/20"
-                    : "text-muted hover:text-foreground hover:bg-card"
+                    ? "bg-accent-muted text-accent"
+                    : "text-muted hover:text-foreground hover:bg-card-hover"
                 }
               `}
               title={collapsed ? item.label : undefined}
@@ -169,7 +170,7 @@ export default function Sidebar() {
             <>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-foreground truncate">{displayName}</p>
-                <p className="text-[10px] text-muted truncate">{email}</p>
+                <p className="text-xs text-muted truncate">{email}</p>
               </div>
               <button
                 onClick={async () => {

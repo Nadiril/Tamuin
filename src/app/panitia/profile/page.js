@@ -86,15 +86,10 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="w-full max-w-3xl mx-auto px-6 max-lg:px-5 max-sm:px-4 py-6 space-y-6">
-      {/* Page Header */}
-      <div>
-        <h1 className="text-xl font-bold text-foreground tracking-tight">Profil</h1>
-        <p className="text-sm text-muted-foreground mt-1">Informasi akun dan pengaturan</p>
-      </div>
+    <div className="w-full max-w-3xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
 
       {/* Profile Card */}
-      <div className="bg-white rounded-xl border border-border overflow-hidden">
+      <div className="glass-card rounded-2xl overflow-hidden">
         <div className="px-6 py-5 border-b border-border">
           <h2 className="text-sm font-semibold text-foreground">Informasi Akun</h2>
         </div>
@@ -183,7 +178,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Change Password Card */}
-      <div className="bg-white rounded-xl border border-border overflow-hidden">
+      <div className="glass-card rounded-2xl overflow-hidden">
         <div className="px-6 py-5 border-b border-border">
           <div className="flex items-center gap-2">
             <Lock className="w-4 h-4 text-accent" />
@@ -262,13 +257,13 @@ export default function ProfilePage() {
 
       {/* Toast */}
       {toast && (
-        <div className="fixed bottom-6 right-6 z-50">
-          <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border shadow-lg bg-white ${
+        <div className="fixed bottom-4 right-4 left-4 sm:left-auto sm:bottom-6 sm:right-6 z-50 flex justify-end">
+          <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border shadow-lg bg-white w-full sm:w-auto ${
             toast.type === "success" ? "border-success/20" : "border-danger/20"
           }`}>
             <CheckCircle className={`w-5 h-5 ${toast.type === "success" ? "text-success" : "text-danger"}`} />
-            <p className="text-sm font-medium text-foreground">{toast.message}</p>
-            <button onClick={() => setToast(null)} className="text-muted-foreground hover:text-foreground cursor-pointer">
+            <p className="text-sm font-medium text-foreground flex-1 sm:flex-initial">{toast.message}</p>
+            <button onClick={() => setToast(null)} className="text-muted-foreground hover:text-foreground cursor-pointer shrink-0">
               <X className="w-4 h-4" />
             </button>
           </div>

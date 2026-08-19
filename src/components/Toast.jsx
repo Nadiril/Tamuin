@@ -79,7 +79,7 @@ export default function Toast({ message, type = "success", duration = 3000, onCl
       <p className="text-sm text-foreground font-medium flex-1 leading-snug pt-0.5">{message}</p>
       <button
         onClick={handleClose}
-        className="text-muted hover:text-foreground transition-colors shrink-0 mt-0.5"
+        className="p-1 rounded-lg text-muted hover:text-foreground hover:bg-surface-variant transition-colors shrink-0 -m-1"
       >
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

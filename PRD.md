@@ -1,9 +1,9 @@
    # Product Requirements Document (PRD)
-# Buku Tamu Digital
+# Tamuin (sebelumnya Buku Tamu Digital)
 
 ## 1. Ringkasan Produk
 
-Buku Tamu Digital adalah aplikasi frontend yang memudahkan tamu untuk mengisi data kunjungan secara online dan memudahkan admin untuk memantau serta mengelola daftar tamu dengan lebih cepat, aman, dan rapi. Aplikasi ini bertujuan menggantikan sistem pencatatan tamu secara manual yang sering kali memakan waktu, rawan kesalahan, dan sulit diakses saat diperlukan.
+Tamuin adalah aplikasi frontend yang memudahkan tamu untuk mengisi data kunjungan secara online dan memudahkan admin untuk memantau serta mengelola daftar tamu dengan lebih cepat, aman, dan rapi. Aplikasi ini bertujuan menggantikan sistem pencatatan tamu secara manual yang sering kali memakan waktu, rawan kesalahan, dan sulit diakses saat diperlukan.
 
 Produk ini dirancang untuk digunakan di kantor, lembaga, instansi, atau tempat usaha yang membutuhkan catatan kunjungan yang terstruktur dan terdokumentasi dengan baik.
 
@@ -17,7 +17,7 @@ Pada proses kunjungan manual, tamu biasanya mencatat nama, instansi, keperluan, 
 - Tidak efisien untuk jumlah kunjungan yang besar
 - Sulit untuk mengakses data dari perangkat lain
 
-Dengan adanya sistem buku tamu digital, data kunjungan dapat disimpan secara terorganisir dan diakses dengan lebih mudah oleh admin.
+Dengan adanya sistem pencatatan tamu digital, data kunjungan dapat disimpan secara terorganisir dan diakses dengan lebih mudah oleh admin.
 
 ## 3. Tujuan Produk
 
@@ -64,7 +64,7 @@ Sistem kunjungan yang masih manual menyebabkan proses pencatatan tamu kurang efi
 
 ## 7. Solusi yang Diusulkan
 
-Aplikasi Buku Tamu Digital menyediakan:
+Aplikasi Tamuin menyediakan:
 
 - Formulir isian tamu yang mudah digunakan
 - Validasi input agar semua data masuk sesuai format yang benar
@@ -224,7 +224,7 @@ Mitigasi: sediakan struktur data yang jelas dan tampilan list yang terorganisir.
 
 ## 17. Kesimpulan
 
-Buku Tamu Digital merupakan solusi digital yang menyederhanakan proses pencatatan kunjungan, meningkatkan efisiensi kerja admin, serta memberikan pengalaman yang lebih nyaman bagi tamu. Dengan fitur inti berupa formulir tamu, validasi, dan daftar kunjungan yang responsif, aplikasi ini memiliki potensi untuk diterapkan secara luas di berbagai lingkungan kerja.
+Tamuin merupakan solusi digital yang menyederhanakan proses pencatatan kunjungan, meningkatkan efisiensi kerja admin, serta memberikan pengalaman yang lebih nyaman bagi tamu. Dengan fitur inti berupa formulir tamu, validasi, dan daftar kunjungan yang responsif, aplikasi ini memiliki potensi untuk diterapkan secara luas di berbagai lingkungan kerja.
 
 ## 18. Informasi Tambahan
 

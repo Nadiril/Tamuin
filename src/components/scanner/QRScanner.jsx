@@ -100,7 +100,12 @@ export default function QRScanner({ onScan, onError }) {
             components={{ finder: false }}
             styles={{
               container: { width: "100%", height: "100%" },
-              video: { width: "100%", height: "100%", objectFit: "cover" },
+              video: {
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                transform: facingMode === "environment" ? "scaleX(1)" : "scaleX(-1)",
+              },
             }}
             scanDelay={300}
             retryDelay={100}

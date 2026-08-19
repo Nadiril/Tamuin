@@ -1,13 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import * as XLSX from "xlsx";
 import Navbar from "@/components/Navbar";
 import Button from "@/components/Button";
+import AttendanceChart from "@/components/charts/AttendanceChart";
 import { useGuestsQuery } from "@/lib/queries/useGuestsQuery";
 import { useEventsQuery } from "@/lib/queries/useEventsQuery";
 import { useLogActivity } from "@/lib/queries/useActivitiesQuery";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { FileDown, FileSpreadsheet, Users, CheckCircle, XCircle, AlertTriangle, TrendingUp } from "lucide-react";
 
 const statusLabel = {
@@ -18,7 +17,7 @@ const statusLabel = {
 
 export default function LaporanPage() {
   const [eventFilter, setEventFilter] = useState("");
-  const { data: guests = [] } = useGuestsQuery();
+  const { data: guests = [] } = useGuestsQuery(eventFilter ? { acara_id: eventFilter } : {});
   const { data: events = [] } = useEventsQuery();
   const { mutateAsync: logActivity } = useLogActivity();
 
@@ -27,9 +26,7 @@ export default function LaporanPage() {
     return event ? event.nama_acara : "—";
   };
 
-  const filteredGuests = eventFilter
-    ? guests.filter((g) => g.acara_id === parseInt(eventFilter))
-    : guests;
+  const filteredGuests = guests;
 
   const total = filteredGuests.length;
   const hadir = filteredGuests.filter((g) => g.status_kehadiran === "hadir").length;
@@ -78,17 +75,12 @@ export default function LaporanPage() {
   const exportData = filteredGuests.map((g) => ({
     Nama: g.nama,
     Instansi: g.instansi,
+    "Nama Mahasiswa": g.nama_mahasiswa || "-",
+    Alamat: g.alamat || "-",
     "No. HP": g.no_hp || "-",
-    Kategori: g.kategori_tamu.charAt(0).toUpperCase() + g.kategori_tamu.slice(1),
+    Kategori: (g.kategori_tamu || "reguler").charAt(0).toUpperCase() + (g.kategori_tamu || "reguler").slice(1),
     "Status Kehadiran": statusLabel[g.status_kehadiran] || g.status_kehadiran,
     Acara: getEventName(g.acara_id),
-    "Waktu Daftar": new Date(g.created_at).toLocaleString("id-ID", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    }),
   }));
 
   const handleExportCSV = () => {
@@ -110,9 +102,10 @@ export default function LaporanPage() {
     URL.revokeObjectURL(url);
   };
 
-  const handleExportExcel = () => {
+  const handleExportExcel = async () => {
     if (exportData.length === 0) return;
     logActivity({ action: "export_laporan", detail: "Mengexport laporan Excel" + (eventFilter ? ` (filter acara)` : " (semua acara)") });
+    const XLSX = await import("xlsx");
     const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Laporan Tamu");
@@ -132,7 +125,7 @@ export default function LaporanPage() {
         subtitle="Lihat dan unduh laporan data tamu berdasarkan acara"
       />
 
-      <div className="flex-1 p-4 sm:p-6 space-y-6">
+      <div className="flex-1 w-full max-w-[1440px] mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
         {/* Filter & Export */}
         <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
           <div className="relative w-full sm:w-72">
@@ -142,7 +135,7 @@ export default function LaporanPage() {
             <select
               value={eventFilter}
               onChange={(e) => setEventFilter(e.target.value)}
-              className="w-full rounded-xl bg-input border border-input-border pl-10 pr-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-input-focus transition-all duration-200 appearance-none cursor-pointer"
+              className="w-full h-10 rounded-[10px] bg-surface border border-input-border pl-10 pr-4 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-input-focus transition-all duration-200 appearance-none cursor-pointer"
             >
               <option value="">Semua Acara</option>
               {events.map((event) => (
@@ -165,7 +158,7 @@ export default function LaporanPage() {
         </div>
 
         {/* Stat Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
           {statCards.map((card) => (
             <div
               key={card.title}
@@ -201,19 +194,7 @@ export default function LaporanPage() {
               </p>
             </div>
           ) : (
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" />
-                <XAxis dataKey="name" tick={{ fontSize: 13 }} />
-                <YAxis allowDecimals={false} />
-                <Tooltip />
-                <Bar dataKey="value" radius={[6, 6, 0, 0]} barSize={60}>
-                  {chartData.map((entry, idx) => (
-                    <Cell key={idx} fill={entry.fill} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+            <AttendanceChart data={chartData} />
           )}
         </div>
 
@@ -239,64 +220,108 @@ export default function LaporanPage() {
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm min-w-[600px]">
-                <thead>
-                  <tr className="border-b border-border">
-                    <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">Nama</th>
-                    <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">Instansi</th>
-                    <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">Kategori</th>
-                    <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">Status</th>
-                    {!eventFilter && (
-                      <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">Acara</th>
+            <>
+              {/* Card Layout for Mobile */}
+              <div className="grid grid-cols-1 gap-4 md:hidden">
+                {filteredGuests.map((guest) => (
+                  <div key={guest.id} className="glass-card rounded-2xl p-4 flex flex-col gap-2 border border-border/50">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-sm font-semibold text-foreground truncate">{guest.nama}</span>
+                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full inline-block ${
+                        guest.kategori_tamu === "vip" ? "bg-warning-muted text-warning border border-warning/20" :
+                        guest.kategori_tamu === "vvip" ? "bg-danger-muted text-danger border border-danger/20" :
+                        "bg-info-muted text-info border border-info/20"
+                      }`}>
+                        {guest.kategori_tamu === "vvip" ? "VVIP" : guest.kategori_tamu === "vip" ? "VIP" : "Reguler"}
+                      </span>
+                    </div>
+                    
+                    <div className="text-xs text-muted">
+                      <span className="font-medium text-foreground/80">Instansi: </span>{guest.instansi || "—"}
+                    </div>
+                    {guest.nama_mahasiswa && guest.nama_mahasiswa !== "-" && (
+                      <div className="text-xs text-muted">
+                        <span className="font-medium text-foreground/80">Mahasiswa: </span>{guest.nama_mahasiswa}
+                      </div>
                     )}
-                    <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">Waktu</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredGuests.map((guest) => (
-                    <tr key={guest.id} className="border-b border-border/50 last:border-0">
-                      <td className="px-4 py-3 font-medium text-foreground">{guest.nama}</td>
-                      <td className="px-4 py-3 text-muted">{guest.instansi}</td>
-                      <td className="px-4 py-3">
-                        <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
-                          guest.kategori_tamu === "vip" ? "bg-warning-muted text-warning border border-warning/20" :
-                          guest.kategori_tamu === "vvip" ? "bg-danger-muted text-danger border border-danger/20" :
-                          "bg-info-muted text-info border border-info/20"
-                        }`}>
-                          {guest.kategori_tamu === "vvip" ? "VVIP" : guest.kategori_tamu === "vip" ? "VIP" : "Reguler"}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
-                          guest.status_kehadiran === "terlambat" ? "bg-warning-muted text-warning border border-warning/20" :
-                          guest.status_kehadiran === "tidak_hadir" ? "bg-danger-muted text-danger border border-danger/20" :
-                          "bg-success-muted text-success border border-success/20"
-                        }`}>
-                          {statusLabel[guest.status_kehadiran]}
-                        </span>
-                      </td>
+                    {guest.alamat && (
+                      <div className="text-xs text-muted">
+                        <span className="font-medium text-foreground/80">Alamat: </span>{guest.alamat}
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-between border-t border-border/30 pt-2 mt-1">
+                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full inline-block ${
+                        guest.status_kehadiran === "terlambat" ? "bg-warning-muted text-warning border border-warning/20" :
+                        guest.status_kehadiran === "tidak_hadir" ? "bg-danger-muted text-danger border border-danger/20" :
+                        "bg-success-muted text-success border border-success/20"
+                      }`}>
+                        {statusLabel[guest.status_kehadiran]}
+                      </span>
                       {!eventFilter && (
+                        <span className="text-xs bg-accent-muted text-accent px-2 py-0.5 rounded-full font-medium truncate max-w-[150px]">
+                          {getEventName(guest.acara_id)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Table Layout for Desktop */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-sm min-w-[600px]">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">Nama</th>
+                      <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">Instansi</th>
+                      <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">Nama Mahasiswa</th>
+                      <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">Alamat</th>
+                      <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">Kategori</th>
+                      <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">Status</th>
+                      {!eventFilter && (
+                        <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">Acara</th>
+                      )}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredGuests.map((guest) => (
+                      <tr key={guest.id} className="border-b border-border/50 last:border-0">
+                        <td className="px-4 py-3 font-medium text-foreground">{guest.nama}</td>
+                        <td className="px-4 py-3 text-muted">{guest.instansi || "—"}</td>
+                        <td className="px-4 py-3 text-muted">{guest.nama_mahasiswa || "-"}</td>
+                        <td className="px-4 py-3 text-muted">{guest.alamat || "—"}</td>
                         <td className="px-4 py-3">
-                          <span className="text-xs bg-accent-muted text-accent px-2.5 py-1 rounded-full font-medium">
-                            {getEventName(guest.acara_id)}
+                          <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                            guest.kategori_tamu === "vip" ? "bg-warning-muted text-warning border border-warning/20" :
+                            guest.kategori_tamu === "vvip" ? "bg-danger-muted text-danger border border-danger/20" :
+                            "bg-info-muted text-info border border-info/20"
+                          }`}>
+                            {guest.kategori_tamu === "vvip" ? "VVIP" : guest.kategori_tamu === "vip" ? "VIP" : "Reguler"}
                           </span>
                         </td>
-                      )}
-                      <td className="px-4 py-3 text-muted whitespace-nowrap">
-                        <span className="text-xs">
-                          {new Date(guest.created_at).toLocaleDateString("id-ID", {
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
-                          })}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                        <td className="px-4 py-3">
+                          <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                            guest.status_kehadiran === "terlambat" ? "bg-warning-muted text-warning border border-warning/20" :
+                            guest.status_kehadiran === "tidak_hadir" ? "bg-danger-muted text-danger border border-danger/20" :
+                            "bg-success-muted text-success border border-success/20"
+                          }`}>
+                            {statusLabel[guest.status_kehadiran]}
+                          </span>
+                        </td>
+                        {!eventFilter && (
+                          <td className="px-4 py-3">
+                            <span className="text-xs bg-accent-muted text-accent px-2.5 py-1 rounded-full font-medium">
+                              {getEventName(guest.acara_id)}
+                            </span>
+                          </td>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </div>
       </div>

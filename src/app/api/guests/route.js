@@ -1,33 +1,15 @@
-import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { generateToken } from "@/lib/token";
-
-function sanitize(value) {
-  if (typeof value !== "string") return "";
-  return value.trim().replace(/<[^>]*>/g, "").slice(0, 500);
-}
+import { sanitize, normalizeEmail, requireRole, findDuplicateGuest, insertGuests } from "@/lib/api-helpers";
 
 export async function GET(request) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile || !["admin", "panitia"].includes(profile.role)) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const { supabase, response } = await requireRole(["admin", "panitia"]);
+  if (response) return response;
 
   const { searchParams } = new URL(request.url);
   const acara_id = searchParams.get("acara_id");
 
-  let query = supabase.from("guests").select("*").order("created_at", { ascending: false });
+  let query = supabase.from("guests").select("*").order("id", { ascending: false });
   if (acara_id) query = query.eq("acara_id", parseInt(acara_id));
 
   const { data, error } = await query;
@@ -36,56 +18,75 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile || !["admin", "panitia"].includes(profile.role)) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const { supabase, response } = await requireRole(["admin", "panitia"]);
+  if (response) return response;
 
   try {
     const body = await request.json();
     const nama = sanitize(body.nama);
     const instansi = sanitize(body.instansi);
+    const kategori_tamu = body.kategori_tamu || "reguler";
+    const no_hp = body.no_hp ? sanitize(body.no_hp).slice(0, 20) : null;
+    const email = normalizeEmail(body.email);
 
-    if (!nama || !instansi) {
-      return NextResponse.json({ error: "Nama dan instansi wajib diisi" }, { status: 400 });
+    if (!nama) {
+      return NextResponse.json({ error: "Nama wajib diisi" }, { status: 400 });
+    }
+    if (!["reguler", "vip", "vvip"].includes(kategori_tamu)) {
+      return NextResponse.json({ error: "Kategori tamu tidak valid" }, { status: 400 });
     }
     if (!body.acara_id || isNaN(Number(body.acara_id))) {
       return NextResponse.json({ error: "Acara tidak valid" }, { status: 400 });
     }
+    const alamat = sanitize(body.alamat);
+    if (!alamat) {
+      return NextResponse.json({ error: "Alamat wajib diisi" }, { status: 400 });
+    }
+
+    const acara_id = Number(body.acara_id);
+    const duplicate = await findDuplicateGuest(supabase, { acara_id, no_hp, email });
+    if (duplicate) {
+      const reason = no_hp && email
+        ? "nomor HP atau email"
+        : no_hp
+          ? "nomor HP"
+          : "email";
+      return NextResponse.json(
+        { error: `Tamu dengan ${reason} yang sama sudah terdaftar di acara ini (${duplicate.nama})` },
+        { status: 409 },
+      );
+    }
+
+    const isVip = kategori_tamu !== "reguler";
+    const nama_mahasiswa = isVip
+      ? "-"
+      : sanitize(body.nama_mahasiswa) || nama;
 
     const guest = {
       nama,
-      instansi,
-      no_hp: body.no_hp ? sanitize(body.no_hp).slice(0, 20) : null,
+      instansi: instansi || null,
+      no_hp,
+      email,
       tujuan: body.tujuan ? sanitize(body.tujuan) : null,
-      kategori_tamu: body.kategori_tamu || "reguler",
+      nama_mahasiswa,
+      alamat,
+      kategori_tamu,
       status_kehadiran: "tidak_hadir",
-      acara_id: Number(body.acara_id),
+      acara_id,
       qr_token: generateToken(),
     };
 
-    if (!["reguler", "vip", "vvip"].includes(guest.kategori_tamu)) {
-      return NextResponse.json({ error: "Kategori tamu tidak valid" }, { status: 400 });
+    const { data, error } = await insertGuests(supabase, [guest], { select: "*", single: true });
+
+    if (error) {
+      if (error.code === "23505") {
+        return NextResponse.json(
+          { error: "Tamu dengan nomor HP atau email yang sama sudah terdaftar di acara ini" },
+          { status: 409 },
+        );
+      }
+      return NextResponse.json({ error: "Gagal menambahkan tamu" }, { status: 500 });
     }
-
-    const { data, error } = await supabase
-      .from("guests")
-      .insert([guest])
-      .select()
-      .single();
-
-    if (error) return NextResponse.json({ error: "Gagal menambahkan tamu" }, { status: 500 });
     return NextResponse.json(data, { status: 201 });
   } catch (err) {
     return NextResponse.json({ error: "Data tidak valid" }, { status: 400 });

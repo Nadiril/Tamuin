@@ -1,8 +1,8 @@
 import Providers from "@/app/providers";
 
 export const metadata = {
-  title: "Buku Tamu Digital",
-  description: "Panel admin Buku Tamu Digital.",
+  title: "Tamuin",
+  description: "Panel admin Tamuin.",
 };
 
 export default function AdminLayout({ children }) {

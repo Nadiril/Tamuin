@@ -19,6 +19,13 @@ const defaultForm = {
   grace_period_minutes: "30",
 };
 
+// "09:00:00" / "09:00" → "09:00" (input type="time" hanya menerima HH:mm)
+function toHHmm(value) {
+  if (!value) return "";
+  const match = String(value).match(/^(\d{2}):(\d{2})/);
+  return match ? `${match[1]}:${match[2]}` : "";
+}
+
 export default function EventsPage() {
   const { data: events = [] } = useEventsQuery();
   const { addEvent, updateEvent, deleteEvent } = useEventMutations();
@@ -35,7 +42,7 @@ export default function EventsPage() {
   };
 
   const filtered = events.filter(
-    (e) => e.nama_acara.toLowerCase().includes(search.toLowerCase()) || e.lokasi.toLowerCase().includes(search.toLowerCase())
+    (e) => (e.nama_acara || "").toLowerCase().includes(search.toLowerCase()) || (e.lokasi || "").toLowerCase().includes(search.toLowerCase())
   );
 
   const resetForm = () => {
@@ -46,6 +53,10 @@ export default function EventsPage() {
 
   const handleCreateEvent = async (e) => {
     e.preventDefault();
+    if (!newEvent.jam_mulai || !newEvent.jam_selesai) {
+      showToast("Jam Mulai dan Jam Selesai wajib diisi", "error");
+      return;
+    }
     const event = {
       nama_acara: newEvent.nama_acara,
       lokasi: newEvent.lokasi,
@@ -82,6 +93,10 @@ export default function EventsPage() {
 
   const handleUpdateEvent = async (e) => {
     e.preventDefault();
+    if (!newEvent.jam_mulai || !newEvent.jam_selesai) {
+      showToast("Jam Mulai dan Jam Selesai wajib diisi", "error");
+      return;
+    }
     try {
       await updateEvent(editingEvent.id, {
         nama_acara: newEvent.nama_acara,
@@ -120,7 +135,7 @@ export default function EventsPage() {
   const handleStatusChange = async (event, newStatus) => {
     const statusLabels = {
       akan_datang: "Akan Datang",
-      registrasi_dibuka: "Registrasi Dibuka",
+      "registrasi_dibuka": "registrasi_dibuka",
       registrasi_ditutup: "Registrasi Ditutup",
     };
 
@@ -130,7 +145,7 @@ export default function EventsPage() {
       );
       if (alreadyActive) {
         showToast(
-          "Gagal mengubah status. Hanya satu acara yang bisa berstatus Registrasi Dibuka dalam satu waktu.",
+          "Gagal mengubah status. Hanya satu acara yang bisa berstatus registrasi_dibuka dalam satu waktu.",
           "error",
         );
         return;
@@ -153,17 +168,17 @@ export default function EventsPage() {
   return (
     <>
       <Navbar title="Kelola Acara" subtitle="Buat, edit, dan kelola semua acara" actions={
-        <Button onClick={() => setShowModal(true)} icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>}>Buat Acara</Button>
+        <Button onClick={() => setShowModal(true)} title="Buat Acara Baru" icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>}><span className="hidden sm:inline">Buat Acara</span></Button>
       } />
 
-      <div className="flex-1 p-6 space-y-6">
+      <div className="flex-1 w-full max-w-[1440px] mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
         <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
           <div className="w-full sm:w-80">
             <Input placeholder="Cari acara..." value={search} onChange={(e) => setSearch(e.target.value)} icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>} />
           </div>
           <span className="text-sm text-muted"><span className="text-foreground font-medium">{filtered.length}</span> acara ditemukan</span>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 stagger-children">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5 stagger-children">
           {filtered.map((event) => (<EventCard key={event.id} event={event} onEdit={handleEdit} onDelete={handleDelete} onStatusChange={handleStatusChange} />))}
         </div>
         {filtered.length === 0 && (
@@ -178,8 +193,8 @@ export default function EventsPage() {
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={resetForm}></div>
-          <div className="relative glass-card rounded-2xl p-8 w-full max-w-lg mx-4 glow-accent max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
+          <div className="relative glass-card rounded-2xl p-6 sm:p-8 w-full max-w-lg mx-4 glow-accent max-h-[90vh] flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between mb-6 shrink-0">
               <div>
                 <h2 className="text-lg font-bold text-foreground">{editingEvent ? "Edit Acara" : "Buat Acara Baru"}</h2>
                 <p className="text-sm text-muted mt-0.5">{editingEvent ? "Perbarui detail acara di bawah ini" : "Isi detail acara di bawah ini"}</p>
@@ -188,19 +203,19 @@ export default function EventsPage() {
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
-            <form onSubmit={editingEvent ? handleUpdateEvent : handleCreateEvent} className="space-y-4">
+            <form onSubmit={editingEvent ? handleUpdateEvent : handleCreateEvent} className="space-y-4 overflow-y-auto flex-1 pr-1 pb-2">
               <Input id="event-name" label="Nama Acara" placeholder="Contoh: Seminar AI 2026" value={newEvent.nama_acara} onChange={(e) => setNewEvent({ ...newEvent, nama_acara: e.target.value })} required />
               <Input id="event-location" label="Lokasi" placeholder="Contoh: Aula Kampus Utama" value={newEvent.lokasi} onChange={(e) => setNewEvent({ ...newEvent, lokasi: e.target.value })} required />
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Input id="event-start" label="Tanggal Mulai" type="date" value={newEvent.tanggal_mulai} onChange={(e) => setNewEvent({ ...newEvent, tanggal_mulai: e.target.value })} required />
                 <Input id="event-end" label="Tanggal Selesai" type="date" value={newEvent.tanggal_selesai} onChange={(e) => setNewEvent({ ...newEvent, tanggal_selesai: e.target.value })} required />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <Input id="event-start-time" label="Jam Mulai" type="time" value={newEvent.jam_mulai} onChange={(e) => setNewEvent({ ...newEvent, jam_mulai: e.target.value })} required />
-                <Input id="event-end-time" label="Jam Selesai" type="time" value={newEvent.jam_selesai} onChange={(e) => setNewEvent({ ...newEvent, jam_selesai: e.target.value })} required />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Input id="event-start-time" label="Jam Mulai" type="time" value={toHHmm(newEvent.jam_mulai)} onChange={(e) => setNewEvent({ ...newEvent, jam_mulai: e.target.value })} required />
+                <Input id="event-end-time" label="Jam Selesai" type="time" value={toHHmm(newEvent.jam_selesai)} onChange={(e) => setNewEvent({ ...newEvent, jam_selesai: e.target.value })} required />
               </div>
               <Input id="event-grace" label="Batas Toleransi (menit)" type="number" placeholder="30" value={newEvent.grace_period_minutes} onChange={(e) => setNewEvent({ ...newEvent, grace_period_minutes: e.target.value })} />
-              <div className="flex gap-3 pt-4">
+              <div className="flex gap-3 pt-4 shrink-0">
                 <Button type="button" variant="secondary" className="flex-1" onClick={resetForm}>Batal</Button>
                 <Button type="submit" className="flex-1">{editingEvent ? "Simpan Perubahan" : "Simpan Acara"}</Button>
               </div>

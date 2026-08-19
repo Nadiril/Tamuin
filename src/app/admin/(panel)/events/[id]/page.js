@@ -8,7 +8,7 @@ import { useEventsQuery } from "@/lib/queries/useEventsQuery";
 import { useGuestsQuery } from "@/lib/queries/useGuestsQuery";
 
 const statusMap = {
-  registrasi_dibuka: { badge: "bg-success-muted text-success border border-success/20", dot: "bg-success pulse-dot", label: "Registrasi Dibuka" },
+  "registrasi_dibuka": { badge: "bg-success-muted text-success border border-success/20", dot: "bg-success pulse-dot", label: "Registrasi Dibuka" },
   akan_datang: { badge: "bg-warning-muted text-warning border border-warning/20", dot: "bg-warning", label: "Akan Datang" },
   registrasi_ditutup: { badge: "bg-danger-muted text-danger border border-danger/20", dot: "bg-danger", label: "Registrasi Ditutup" },
 };
@@ -18,7 +18,7 @@ const fmtDate = (d) => new Date(d).toLocaleDateString("id-ID", { weekday: "long"
 export default function EventDetailPage() {
   const { id } = useParams();
   const { data: events = [] } = useEventsQuery();
-  const { data: guests = [] } = useGuestsQuery();
+  const { data: guests = [] } = useGuestsQuery({ acara_id: id });
   const event = events.find((e) => e.id === parseInt(id));
 
   if (!event) {
@@ -32,14 +32,14 @@ export default function EventDetailPage() {
     );
   }
 
-  const eventGuests = guests.filter((g) => g.acara_id === event.id);
+  const eventGuests = guests;
   const s = statusMap[event.status] || statusMap.akan_datang;
 
   return (
     <>
       <Navbar title={event.nama_acara} subtitle="Detail dan data tamu acara" />
 
-      <div className="flex-1 p-6 space-y-6">
+      <div className="flex-1 w-full max-w-[1440px] mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
         <div className="flex items-center gap-2 text-sm">
           <Link href="/admin/events" className="text-muted hover:text-accent transition-colors">Acara</Link>
           <svg className="w-3.5 h-3.5 text-muted/40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
@@ -50,8 +50,8 @@ export default function EventDetailPage() {
           <div className="glass-card rounded-2xl p-6 space-y-5">
             <div className="flex items-start justify-between">
               <div>
-                <h2 className="text-xl font-bold text-foreground">{event.nama_acara}</h2>
-                <p className="text-sm text-muted mt-1">Dibuat pada {new Date(event.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}</p>
+                <h2 className="text-lg font-bold text-foreground">Informasi Acara</h2>
+                <p className="text-xs text-muted mt-1">Dibuat pada {new Date(event.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}</p>
               </div>
               <span className={`${s.badge} text-xs font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5`}>
                 <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`}></span>{s.label}

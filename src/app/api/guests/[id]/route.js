@@ -1,28 +1,10 @@
-import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
-
-function sanitize(value) {
-  if (typeof value !== "string") return "";
-  return value.trim().replace(/<[^>]*>/g, "").slice(0, 500);
-}
+import { sanitize, normalizeEmail, requireRole, findDuplicateGuest } from "@/lib/api-helpers";
 
 export async function PUT(request, { params }) {
   const { id } = await params;
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  if (profile?.role !== "admin") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const { supabase, response } = await requireRole(["admin"]);
+  if (response) return response;
 
   try {
     const body = await request.json();
@@ -30,7 +12,10 @@ export async function PUT(request, { params }) {
       "nama",
       "instansi",
       "no_hp",
+      "email",
       "tujuan",
+      "nama_mahasiswa",
+      "alamat",
       "kategori_tamu",
       "status_kehadiran",
       "waktu_kedatangan",
@@ -39,18 +24,73 @@ export async function PUT(request, { params }) {
     const updates = {};
     for (const key of allowed) {
       if (body[key] !== undefined) {
-        updates[key] = key === "acara_id" ? Number(body[key]) : sanitize(body[key]);
+        if (key === "acara_id") updates[key] = Number(body[key]);
+        else if (key === "email") updates[key] = normalizeEmail(body[key]);
+        else updates[key] = sanitize(body[key]);
       }
     }
 
-    const { data, error } = await supabase
+    if (updates.kategori_tamu && !["reguler", "vip", "vvip"].includes(updates.kategori_tamu)) {
+      return NextResponse.json({ error: "Kategori tamu tidak valid" }, { status: 400 });
+    }
+    if (updates.kategori_tamu && updates.kategori_tamu !== "reguler") {
+      updates.nama_mahasiswa = "-";
+    }
+    if (updates.alamat !== undefined && !updates.alamat) {
+      return NextResponse.json({ error: "Alamat wajib diisi" }, { status: 400 });
+    }
+    if (updates.no_hp !== undefined) updates.no_hp = updates.no_hp ? updates.no_hp.slice(0, 20) : null;
+
+    if (updates.acara_id !== undefined || updates.no_hp !== undefined || updates.email !== undefined) {
+      const { data: current } = await supabase
+        .from("guests")
+        .select("acara_id, no_hp, email")
+        .eq("id", id)
+        .single();
+
+      if (current) {
+        const acara_id = updates.acara_id ?? current.acara_id;
+        const no_hp = updates.no_hp !== undefined ? updates.no_hp : current.no_hp;
+        const email = updates.email !== undefined ? updates.email : current.email;
+        const duplicate = await findDuplicateGuest(supabase, { acara_id, no_hp, email, excludeId: id });
+        if (duplicate) {
+          return NextResponse.json(
+            { error: `Tamu dengan nomor HP atau email yang sama sudah terdaftar di acara ini (${duplicate.nama})` },
+            { status: 409 },
+          );
+        }
+      }
+    }
+
+    let updateResult = await supabase
       .from("guests")
       .update(updates)
       .eq("id", id)
       .select()
       .single();
 
-    if (error) return NextResponse.json({ error: "Gagal memperbarui data tamu" }, { status: 500 });
+    // Kolom email belum ada di database (email_migration.sql belum dijalankan)
+    if (updateResult.error && updateResult.error.code === "42703" && updates.email !== undefined) {
+      const { email, ...rest } = updates;
+      updateResult = await supabase
+        .from("guests")
+        .update(rest)
+        .eq("id", id)
+        .select()
+        .single();
+    }
+
+    const { data, error } = updateResult;
+
+    if (error) {
+      if (error.code === "23505") {
+        return NextResponse.json(
+          { error: "Tamu dengan nomor HP atau email yang sama sudah terdaftar di acara ini" },
+          { status: 409 },
+        );
+      }
+      return NextResponse.json({ error: "Gagal memperbarui data tamu" }, { status: 500 });
+    }
     return NextResponse.json(data);
   } catch (err) {
     return NextResponse.json({ error: "Data tidak valid" }, { status: 400 });
@@ -59,21 +99,8 @@ export async function PUT(request, { params }) {
 
 export async function DELETE(request, { params }) {
   const { id } = await params;
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  if (profile?.role !== "admin") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const { supabase, response } = await requireRole(["admin"]);
+  if (response) return response;
 
   const { error } = await supabase.from("guests").delete().eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

@@ -1,23 +1,11 @@
-import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
-import { buildEmailHtml, sendMail, getSenderEmail } from "@/lib/email";
+import { buildEmailHtml, sendMail } from "@/lib/email";
+import { requireRole } from "@/lib/api-helpers";
 
 export async function POST(request) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  if (profile?.role !== "admin") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const { supabase, response } = await requireRole(["admin"]);
+  if (response) return response;
 
   try {
     const { guest_ids, acara_id } = await request.json();

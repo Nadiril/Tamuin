@@ -1,29 +1,11 @@
-import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { sanitize, requireRole } from "@/lib/api-helpers";
 
 export const dynamic = "force-dynamic";
 
-function sanitize(value) {
-  if (typeof value !== "string") return "";
-  return value.trim().replace(/<[^>]*>/g, "").slice(0, 500);
-}
-
 export async function GET() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile || !["admin", "panitia"].includes(profile.role)) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const { supabase, response } = await requireRole(["admin", "panitia"]);
+  if (response) return response;
 
   const { data, error } = await supabase
     .from("events")
@@ -35,21 +17,8 @@ export async function GET() {
 }
 
 export async function POST(request) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  if (profile?.role !== "admin") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const { supabase, user, response } = await requireRole(["admin"]);
+  if (response) return response;
 
   try {
     const body = await request.json();
@@ -62,6 +31,10 @@ export async function POST(request) {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)/g, "");
 
+    // Assign event to the active period (deterministic auto-fill, max 4 per period):
+    // join the latest period if it still has room, otherwise start a new period.
+    const periode_id = await resolvePeriodId(supabase);
+
     const record = {
       nama_acara: sanitize(body.nama_acara),
       lokasi: sanitize(body.lokasi),
@@ -73,6 +46,7 @@ export async function POST(request) {
       status: body.status || "akan_datang",
       slug,
       created_by: user.id,
+      periode_id,
     };
 
     const { data, error } = await supabase
@@ -86,7 +60,7 @@ export async function POST(request) {
         const detail = `${error.message} ${error.details || ""}`.toLowerCase();
         if (detail.includes("single_active")) {
           return NextResponse.json(
-            { error: "Hanya satu acara yang bisa berstatus Registrasi Dibuka dalam satu waktu." },
+            { error: "Hanya satu acara yang bisa berstatus registrasi_dibuka dalam satu waktu." },
             { status: 409 },
           );
         }
@@ -101,4 +75,41 @@ export async function POST(request) {
   } catch (err) {
     return NextResponse.json({ error: "Data tidak valid" }, { status: 400 });
   }
+}
+
+const MAX_EVENTS_PER_PERIODE = 4;
+
+/**
+ * Determines the active period for a newly created event.
+ * Joins the latest period while it has fewer than MAX_EVENTS_PER_PERIODE events;
+ * otherwise (or if no period exists yet) creates and returns a new period.
+ * Deterministic and free of date heuristics.
+ */
+async function resolvePeriodId(supabase) {
+  const { data: latest, error: latestError } = await supabase
+    .from("periodes")
+    .select("id")
+    .order("created_at", { ascending: false })
+    .limit(1);
+
+  if (latestError) throw latestError;
+
+  if (latest && latest.length > 0) {
+    const { count, error: countError } = await supabase
+      .from("events")
+      .select("id", { count: "exact", head: true })
+      .eq("periode_id", latest[0].id);
+
+    if (countError) throw countError;
+    if (count < MAX_EVENTS_PER_PERIODE) return latest[0].id;
+  }
+
+  const { data: created, error: createError } = await supabase
+    .from("periodes")
+    .insert([{}])
+    .select("id")
+    .single();
+
+  if (createError) throw createError;
+  return created.id;
 }

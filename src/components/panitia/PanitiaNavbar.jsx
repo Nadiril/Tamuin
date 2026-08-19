@@ -10,6 +10,7 @@ const pageTitleMap = {
   "/panitia/scan": "Scan QR",
   "/panitia/history": "Riwayat Registrasi",
   "/panitia/profile": "Profil",
+  "/panitia/register": "Registrasi Tamu",
 };
 
 const pageSubtitleMap = {
@@ -18,6 +19,7 @@ const pageSubtitleMap = {
   "/panitia/scan": "Scan QR Code tamu dengan cepat",
   "/panitia/history": "Riwayat registrasi tamu",
   "/panitia/profile": "Kelola data profil Anda",
+  "/panitia/register": "Tambahkan tamu baru ke dalam acara",
 };
 
 export default function PanitiaNavbar({
@@ -34,12 +36,12 @@ export default function PanitiaNavbar({
   const subtitle = pageSubtitleMap[pathname] || "";
 
   return (
-    <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-xl border-b border-border shadow-sm">
-      <div className="flex items-center gap-4 px-4 py-2.5 lg:px-6">
+    <header className="sticky top-0 z-30 bg-surface/95 backdrop-blur-xl border-b border-outline-variant shadow-[var(--shadow-soft)]">
+      <div className="flex items-center gap-3 px-4 h-14 lg:h-16 lg:px-6">
         {/* Hamburger Button */}
         <button
           onClick={onToggleMobile}
-          className="lg:hidden w-9 h-9 rounded-xl bg-card border border-border flex items-center justify-center shrink-0 text-muted hover:text-foreground transition-colors cursor-pointer"
+          className="lg:hidden w-9 h-9 rounded-[10px] bg-surface-variant flex items-center justify-center shrink-0 text-muted hover:text-foreground transition-colors cursor-pointer"
           aria-label={mobileOpen ? "Tutup menu" : "Buka menu"}
         >
           {mobileOpen ? (
@@ -52,20 +54,17 @@ export default function PanitiaNavbar({
         </button>
 
         {/* Title + Subtitle */}
-        <div className="min-w-0">
-          <h1 className="text-base font-bold text-foreground">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-lg font-bold text-foreground leading-tight truncate tracking-tight">
             {title}
           </h1>
-          <p className="text-xs text-muted mt-0.5">
-            {subtitle}
-          </p>
+          {subtitle && (
+            <p className="text-xs text-muted mt-0.5 truncate">{subtitle}</p>
+          )}
         </div>
 
-        {/* Spacer */}
-        <div className="flex-1" />
-
         {/* Right: Event Badge, Notifications, Avatar */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           {activeEvent && (
             <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-accent-muted border border-accent/10">
               <CalendarRange className="w-3.5 h-3.5 text-accent" />
@@ -75,12 +74,12 @@ export default function PanitiaNavbar({
             </div>
           )}
 
-          <button className="relative p-2 rounded-lg text-muted hover:text-foreground hover:bg-card-hover transition-colors cursor-pointer">
+          <button className="relative p-2 rounded-[10px] text-muted hover:text-foreground hover:bg-surface-variant transition-colors cursor-pointer">
             <Bell className="w-[18px] h-[18px]" />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-accent rounded-full ring-2 ring-white" />
+            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-accent rounded-full ring-2 ring-surface" />
           </button>
 
-          <div className="flex items-center gap-2.5 pl-3 border-l border-border">
+          <div className="flex items-center gap-2.5 pl-2 sm:pl-3 sm:border-l sm:border-outline-variant">
             <div className="w-8 h-8 rounded-full bg-accent-muted text-accent flex items-center justify-center text-xs font-semibold shrink-0 ring-2 ring-white">
               {panitiaName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
             </div>

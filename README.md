@@ -14,14 +14,14 @@
 
 ---
 
-## ✨ Fitur
+## Fitur
 
 | Fitur | Deskripsi |
 |-------|-----------|
 | **Multi-Event** | Kelola banyak acara dalam satu platform |
 | **QR Code** | Setiap tamu mendapat QR Code unik untuk scan kehadiran |
 | **Scan Kehadiran** | Panitia scan QR tamu untuk menandai hadir/terlambat |
-| **Grace Period** | Konfigurasi tolerasi keterlambatan per acara |
+| **Grace Period** | Konfigurasi toleransi keterlambatan per acara |
 | **Registrasi Mandiri** | Panitia bisa daftar akun sendiri; status `pending` menunggu persetujuan admin |
 | **User Approval** | Admin menyetujui/menolak akun panitia yang baru mendaftar |
 | **Kategori Tamu** | Kategorisasi Reguler / VIP / VVIP beserta data mahasiswa & alamat |
@@ -35,7 +35,7 @@
 
 ---
 
-## 🎨 Desain UI
+## Desain UI
 
 **Tamuin** memakai **Material 3** sebagai design system dan **Google Pixel** sebagai visual inspiration.
 
@@ -48,82 +48,104 @@
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Teknologi | Kegunaan |
 |-----------|----------|
 | [![Next.js](https://img.shields.io/badge/Next.js-16.2.7-000?logo=next.js)](https://nextjs.org) | React framework (App Router) |
 | [![React](https://img.shields.io/badge/React-19.2.4-61DAFB?logo=react)](https://react.dev) | UI library |
 | [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS_4-06B6D4?logo=tailwindcss)](https://tailwindcss.com) | Utility-first CSS |
-| [![Supabase](https://img.shields.io/badge/Supabase-3FCF8E?logo=supabase)](https://supabase.com) | Auth, database, RLS |
+| [![Supabase](https://img.shields.io/badge/Supabase-3FCF8E?logo=supabase)](https://supabase.com) | Auth, database, RLS, Realtime |
 | [![TanStack Query](https://img.shields.io/badge/TanStack_Query-FF4154?logo=reactquery)](https://tanstack.com/query) | State management & data fetching |
 | [![Recharts](https://img.shields.io/badge/Recharts-22CA9E?logo=recharts)](https://recharts.org) | Grafik & statistik |
 | [![Lucide](https://img.shields.io/badge/Lucide_React-F56565?logo=lucide)](https://lucide.dev) | Ikon |
 | [![QRCode](https://img.shields.io/badge/qrcode.react-000?logo=qrcode)](https://github.com/zpao/qrcode.react) | Generate QR Code |
-| [![Zxing](https://img.shields.io/badge/zxing--wasm-000?logo=wasm)](https://github.com/Saerat/zxing-wasm) | Scan QR Code via WASM |
-| [![Nodemailer](https://img.shields.io/badge/Nodemailer-339933?logo=gmail)](https://nodemailer.com) | Kirim email QR |
+| [![Zxing](https://img.shields.io/badge/zxing--wasm-000?logo=wasm)](https://github.com/nicolo-ribaudo/zxing-wasm) | Scan QR Code via WASM |
 | [![SheetJS](https://img.shields.io/badge/SheetJS_(xlsx)-217346?logo=microsoftexcel)](https://sheetjs.com) | Export Excel |
 
 ---
 
-## 📁 Struktur Folder
+## Struktur Folder
 
 ```
-📦 buku-tamu-digital
+📦 tamuin
 ├── 📂 .next/                  # Build output (auto-generated)
 ├── 📂 .opencode/              # Agent instructions
 ├── 📂 node_modules/           # Dependencies
-├── 📂 public/                 # Static assets (logo, icons)
+├── 📂 public/                 # Static assets
+│   ├── 📂 templates/
+│   │   └── template-data-tamu.csv
+│   ├── Logo.webp
+│   ├── Login Tamuku.webp
+│   ├── login-tamuku.webp
+│   └── zxing_reader.wasm      # WASM binary untuk QR scanning
 ├── 📂 src/
 │   ├── 📂 app/                # Next.js App Router
 │   │   ├── 📂 admin/
-│   │   │   ├── 📂 (auth)/     # Admin login page
-│   │   │   │   └── login/
-│   │   │   └── 📂 (panel)/    # Protected admin panel
-│   │   │       ├── 📂 dashboard/   # Statistik & grafik
-│   │   │       ├── 📂 events/      # CRUD acara
-│   │   │       │   └── [id]/
-│   │   │       ├── 📂 guests/      # Daftar tamu
-│   │   │       ├── 📂 laporan/     # Export laporan
-│   │   │       ├── 📂 scan-qr/     # Scanner QR
-│   │   │       └── 📂 users/       # Manajemen user
-│   │   ├── 📂 api/           # Route handlers (REST API)
+│   │   │   ├── 📂 (auth)/
+│   │   │   │   └── login/         # Login admin
+│   │   │   ├── 📂 (panel)/        # Protected admin panel
+│   │   │   │   ├── 📂 dashboard/  # Statistik & grafik
+│   │   │   │   ├── 📂 events/     # CRUD acara ([id] detail)
+│   │   │   │   ├── 📂 guests/     # Daftar tamu
+│   │   │   │   ├── 📂 laporan/    # Export laporan
+│   │   │   │   ├── 📂 scan-qr/    # Scanner QR
+│   │   │   │   ├── 📂 settings/   # Pengaturan
+│   │   │   │   └── 📂 users/      # Manajemen user & approval
+│   │   │   └── not-found.js       # 404 admin
+│   │   ├── 📂 api/                # Route handlers (REST API)
 │   │   │   ├── 📂 activities/
+│   │   │   ├── 📂 admin/
+│   │   │   │   └── reset-data/
 │   │   │   ├── 📂 auth/
+│   │   │   │   ├── login/
+│   │   │   │   ├── logout/
+│   │   │   │   └── session/
 │   │   │   ├── 📂 events/
+│   │   │   │   └── [id]/
 │   │   │   ├── 📂 guests/
+│   │   │   │   ├── [id]/
+│   │   │   │   │   └── reset-attendance/
+│   │   │   │   ├── bulk-delete/
+│   │   │   │   └── import/
 │   │   │   ├── 📂 public/
-│   │   │   │   ├── 📂 check-email/
-│   │   │   │   ├── 📂 events/
-│   │   │   │   ├── 📂 guests/
-│   │   │   │   ├── 📂 register/      # Registrasi mandiri (pendaftaran akun panitia)
-│   │   │   │   └── 📂 scan/
-│   │   │   ├── 📂 scan/
-│   │   │   ├── 📂 send-qr/
+│   │   │   │   ├── check-email/
+│   │   │   │   ├── events/
+│   │   │   │   ├── guests/
+│   │   │   │   ├── register/
+│   │   │   │   └── scan/[token]/
+│   │   │   ├── 📂 scan/[token]/
 │   │   │   └── 📂 users/
-│   │   ├── 📂 event/
-│   │   │   └── [slug]/       # Form registrasi tamu publik
-│   │   ├── 📂 panitia/       # Panel panitia
-│   │   │   ├── 📂 (panel)/
+│   │   │       └── [id]/
+│   │   ├── 📂 event/[slug]/       # Form registrasi tamu publik
+│   │   ├── 📂 panitia/            # Panel panitia
 │   │   │   ├── 📂 events/
 │   │   │   ├── 📂 history/
 │   │   │   ├── 📂 profile/
 │   │   │   ├── 📂 register/
 │   │   │   └── 📂 scan/
-│   │   ├── 📂 scan/
-│   │   │   └── [token]/      # Halaman konfirmasi scan QR
-│   │   ├── favicon.ico
-│   │   ├── globals.css
-│   │   ├── layout.js
-│   │   ├── page.js           # Halaman login
-│   │   └── providers.jsx     # React context providers
-│   ├── 📂 components/        # UI Components
+│   │   ├── 📂 scan/[token]/       # Halaman konfirmasi scan QR
+│   │   ├── globals.css            # Material 3 design tokens
+│   │   ├── icon.png
+│   │   ├── layout.js              # Root layout
+│   │   ├── page.js                # Halaman login/beranda
+│   │   └── providers.jsx          # TanStack Query provider
+│   ├── 📂 components/             # UI Components
+│   │   ├── 📂 auth/
+│   │   │   └── AuthForms.jsx      # Login + register form
+│   │   ├── 📂 charts/
+│   │   │   ├── AttendanceChart.jsx
+│   │   │   └── AttendanceChartInner.jsx
+│   │   ├── 📂 event/
+│   │   │   └── GuestForm.jsx      # Form registrasi tamu
 │   │   ├── 📂 panitia/
 │   │   │   ├── PanitiaLayout.jsx
 │   │   │   ├── PanitiaNavbar.jsx
 │   │   │   └── PanitiaSidebar.jsx
+│   │   ├── 📂 scan/
+│   │   │   └── ScanConfirm.jsx    # Konfirmasi scan UI
 │   │   ├── 📂 scanner/
-│   │   │   └── QRScanner.jsx
+│   │   │   └── QRScanner.jsx      # ZXing QR scanner
 │   │   ├── ActivityFeed.jsx
 │   │   ├── AuthGuard.jsx
 │   │   ├── Button.jsx
@@ -135,48 +157,52 @@
 │   │   ├── Sidebar.jsx
 │   │   ├── StatCard.jsx
 │   │   └── Toast.jsx
-│   ├── 📂 hooks/             # Custom hooks
+│   ├── 📂 hooks/
 │   │   └── useIdleTimer.js
-│   ├── 📂 lib/               # Utility & context
+│   ├── 📂 lib/
+│   │   ├── 📂 queries/            # TanStack Query hooks
+│   │   │   ├── useActivitiesQuery.js
+│   │   │   ├── useEventsQuery.js
+│   │   │   ├── useGuestsQuery.js
+│   │   │   ├── useProfileQuery.js
+│   │   │   ├── useResetDataQuery.js
+│   │   │   └── useUsersQuery.js
+│   │   ├── 📂 realtime/           # Supabase Realtime
+│   │   │   ├── manager.js         # Singleton channel manager
+│   │   │   └── useRealtimeSubscription.js
 │   │   ├── 📂 supabase/
-│   │   │   ├── client.js     # Supabase browser client
-│   │   │   ├── middleware.js  # Supabase middleware
-│   │   │   └── server.js     # Supabase server client
-│   │   ├── ActivityContext.jsx
-│   │   ├── api-helpers.js     # requireRole, sanitize, rate limiter, dedup
-│   │   ├── email.js          # Nodemailer config
-│   │   ├── event-status.js   # Event status helpers
-│   │   ├── EventContext.jsx
-│   │   ├── format-time.js    # Formatter waktu
-│   │   ├── GuestContext.jsx
-│   │   ├── ProfileContext.jsx
-│   │   └── token.js          # QR token generator
-│   └── proxy.js              # Dev proxy
-├── 📂 supabase/              # Database migrations
-│   ├── migration.sql         # Schema + RLS + trigger + register_guest_scan()
-│   ├── public_register_guest_scan.sql  # Public self-scan function
-│   ├── email_migration.sql   # Email logs table + guests email column
-│   ├── guest_dedup.sql       # Unique index (acara_id + HP/email) + cleanup duplikat
-│   ├── guest_instansi_optional.sql  # Kolom instansi jadi opsional
-│   ├── guest_kategori_migration.sql # Kategori tamu + nama_mahasiswa + alamat
-│   ├── event_period_migration.sql   # Periode acara (Acara Terbaru di dashboard)
-│   ├── event_period_backfill.sql    # Masukkan acara lama (NULL periode) ke periode aktif
-│   └── user_approval_migration.sql  # Kolom status (pending/active) akun
-├── .env.local                # Environment variables
+│   │   │   ├── client.js          # Browser client (cookie handling)
+│   │   │   ├── middleware.js       # Session middleware
+│   │   │   └── server.js          # Server client (3 variants)
+│   │   ├── api-helpers.js         # requireRole, sanitize, rate limiter, dedup
+│   │   ├── event-status.js        # Attendance status computation
+│   │   ├── format-time.js         # Time formatting (WIB)
+│   │   └── token.js               # QR token generator
+│   └── proxy.js                   # Dev proxy / middleware
+├── 📂 supabase/                   # Database migrations
+│   ├── migration.sql              # Core schema + RLS + trigger
+│   ├── public_register_guest_scan.sql
+│   ├── guest_dedup.sql            # Unique index anti-duplikat
+│   ├── guest_instansi_optional.sql
+│   ├── guest_kategori_migration.sql  # Kategori tamu VIP/VVIP
+│   ├── event_period_migration.sql    # Periode acara
+│   ├── event_period_backfill.sql
+│   └── user_approval_migration.sql   # User approval workflow
+├── .env.local
 ├── .gitignore
 ├── AGENTS.md
 ├── CHANGELOG.md
+├── PRD.md
 ├── eslint.config.mjs
-├── jsconfig.json             # Path alias (@/)
+├── jsconfig.json                  # Path alias (@/ → ./src/*)
 ├── next.config.mjs
 ├── package.json
-├── postcss.config.mjs
-└── PRD.md
+└── postcss.config.mjs
 ```
 
 ---
 
-## 🧩 Prerequisites
+## Prerequisites
 
 - **Node.js** v18+ (recommended v20+)
 - **npm** v9+ (atau yarn/pnpm/bun)
@@ -184,7 +210,7 @@
 
 ---
 
-## ⚙️ Instalasi
+## Instalasi
 
 ### 1. Clone Repository
 
@@ -219,15 +245,14 @@ Buka **Supabase Dashboard → SQL Editor**, lalu jalankan file SQL berikut **sec
 
 | No | File | Isi | Wajib? |
 |----|------|-----|--------|
-| 1 | `supabase/migration.sql` | Tabel (`profiles`, `events`, `guests`, `activities`), RLS policies, trigger auto-profile, view `events_with_guest_count`, function `register_guest_scan()` | ✅ Ya |
-| 2 | `supabase/public_register_guest_scan.sql` | Function `public_register_guest_scan()` untuk self-scan tamu tanpa login (dipakai di `/api/public/scan/[token]`) | ✅ Ya |
-| 3 | `supabase/email_migration.sql` | Kolom `email` & `qr_sent_at` di tabel `guests`, tabel baru `email_logs` + RLS-nya (dipakai di `/api/send-qr`) | ❌ Opsional (hanya jika fitur kirim QR via email dipakai) |
-| 4 | `supabase/guest_dedup.sql` | Unique index `(acara_id, no_hp)` & `(acara_id, email)` + bersihkan duplikat lama (menjaga data terbaru, baris terlama dipertahankan) | ✅ Ya |
-| 5 | `supabase/guest_instansi_optional.sql` | Kolom `instansi` di tabel `guests` diubah menjadi opsional (nullable) | ✅ Ya |
-| 6 | `supabase/guest_kategori_migration.sql` | Kolom `kategori_tamu` (Reguler/VIP/VVIP), `nama_mahasiswa`, `alamat`; hapus kolom waktu duplikat + backfill data lama | ✅ Ya |
-| 7 | `supabase/event_period_migration.sql` | Tabel `periodes` + kolom `events.periode_id` untuk pengelompokan "Acara Terbaru" di dashboard (auto-fill maks. 4 acara per periode) | ✅ Ya |
-| 8 | `supabase/event_period_backfill.sql` | Menempatkan acara lama (dibuat sebelum migrasi periode, `periode_id` masih `NULL`) ke periode aktif agar muncul kembali di preview dashboard | ❌ Opsional (jalankan jika sudah ada data acara sebelum migrasi periode) |
-| 9 | `supabase/user_approval_migration.sql` | Kolom `status` di tabel `profiles` (default `active`; akun hasil registrasi mandiri berstatus `pending` sampai disetujui admin) | ✅ Ya (wajib jika fitur registrasi mandiri dipakai) |
+| 1 | `supabase/migration.sql` | Tabel (`profiles`, `events`, `guests`, `activities`), RLS policies, trigger auto-profile, view `events_with_guest_count`, function `register_guest_scan()` | Ya |
+| 2 | `supabase/public_register_guest_scan.sql` | Function `public_register_guest_scan()` untuk self-scan tamu tanpa login (dipakai di `/api/public/scan/[token]`) | Ya |
+| 3 | `supabase/guest_dedup.sql` | Unique index `(acara_id, no_hp)` & `(acara_id, email)` + bersihkan duplikat lama | Ya |
+| 4 | `supabase/guest_instansi_optional.sql` | Kolom `instansi` di tabel `guests` diubah menjadi opsional (nullable) | Ya |
+| 5 | `supabase/guest_kategori_migration.sql` | Kolom `kategori_tamu` (Reguler/VIP/VVIP), `nama_mahasiswa`, `alamat`; hapus kolom waktu duplikat + backfill data lama | Ya |
+| 6 | `supabase/event_period_migration.sql` | Tabel `periodes` + kolom `events.periode_id` untuk pengelompokan "Acara Terbaru" di dashboard (auto-fill maks. 4 acara per periode) | Ya |
+| 7 | `supabase/event_period_backfill.sql` | Menempatkan acara lama (dibuat sebelum migrasi periode, `periode_id` masih `NULL`) ke periode aktif | Opsional |
+| 8 | `supabase/user_approval_migration.sql` | Kolom `status` di tabel `profiles` (default `active`; akun hasil registrasi mandiri berstatus `pending` sampai disetujui admin) | Ya |
 
 **Cara menjalankan:**
 1. Copy isi file `.sql`
@@ -235,7 +260,7 @@ Buka **Supabase Dashboard → SQL Editor**, lalu jalankan file SQL berikut **sec
 3. Klik **Run**
 4. Lanjut ke file berikutnya setelah sukses
 
-> **Catatan:** Semua file migrasi bersifat idempotent (aman dijalankan ulang). `public_register_guest_scan.sql`, `email_migration.sql`, `guest_dedup.sql`, dan migrasi lainnya cukup dijalankan sekali. `guest_dedup.sql` aman dijalankan setelah `email_migration.sql` (kolom `email` dibuat otomatis bila belum ada). `event_period_migration.sql` **wajib dijalankan** — tanpa kolom `periode_id`, pembuatan acara baru akan gagal dan dashboard menampilkan "Belum ada acara aktif". `event_period_backfill.sql` hanya memproses acara ber-`periode_id NULL`, jadi aman dijalankan kapan pun (bahkan setelah membuat acara baru).
+> **Catatan:** Semua file migrasi bersifat idempotent (aman dijalankan ulang). `event_period_migration.sql` **wajib dijalankan** — tanpa kolom `periode_id`, pembuatan acara baru akan gagal dan dashboard menampilkan "Belum ada acara aktif". `event_period_backfill.sql` hanya memproses acara ber-`periode_id NULL`, jadi aman dijalankan kapan pun.
 
 ### 5. Buat User Admin
 
@@ -248,7 +273,7 @@ VALUES ('USER_UUID', 'admin@example.com', 'admin', 'Admin Utama');
 
 ---
 
-## 🚀 Menjalankan Aplikasi
+## Menjalankan Aplikasi
 
 ### Development
 
@@ -273,7 +298,7 @@ npm run lint
 
 ---
 
-## 📖 Cara Pakai
+## Cara Pakai
 
 ### Untuk Admin
 
@@ -309,7 +334,7 @@ npm run lint
 
 ---
 
-## 🌐 API Routes
+## API Routes
 
 | Method | Endpoint | Deskripsi |
 |--------|----------|-----------|
@@ -327,11 +352,14 @@ npm run lint
 | PUT | `/api/guests/[id]` | Update tamu |
 | DELETE | `/api/guests/[id]` | Hapus tamu |
 | POST | `/api/guests/import` | Import tamu (Excel) |
+| POST | `/api/guests/bulk-delete` | Hapus tamu secara massal |
+| POST | `/api/guests/[id]/reset-attendance` | Reset status kehadiran tamu |
 | GET | `/api/activities` | Log aktivitas |
 | GET | `/api/users` | List user |
 | POST | `/api/users` | Buat user |
 | PUT | `/api/users/[id]` | Update user (role, status, password) |
 | DELETE | `/api/users/[id]` | Hapus user |
+| DELETE | `/api/admin/reset-data` | Reset semua data |
 | GET | `/api/public/events` | Event publik |
 | GET | `/api/public/guests` | Guest publik |
 | POST | `/api/public/guests` | Registrasi tamu publik |
@@ -341,11 +369,10 @@ npm run lint
 | POST | `/api/public/scan/[token]` | Konfirmasi scan publik |
 | GET | `/api/scan/[token]` | Data scan (auth) |
 | POST | `/api/scan/[token]` | Konfirmasi scan (auth) |
-| POST | `/api/send-qr` | Kirim QR via email |
 
 ---
 
-## 📊 Database Schema
+## Database Schema
 
 ```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
@@ -354,17 +381,18 @@ npm run lint
 │ id (uuid)   │◄────│ created_by  │     │ id (bigint) │
 │ username    │     │ id (bigint) │     │ nama        │
 │ role        │     │ nama_acara  │◄────│ acara_id    │
-│ display_name│     │ slug        │     │ instansi    │
-│ no_hp       │     │ lokasi      │     │ no_hp       │
-│ created_at  │     │ tgl_mulai   │     │ tujuan      │
-└─────────────┘     │ tgl_selesai │     │ qr_token    │
-                    │ jam_mulai   │     │ status      │
-┌─────────────┐     │ jam_selesai │     │ waktu_dtg   │
-│ activities  │     │ grace_period│     │ scanned_by  │
-├─────────────┤     │ status      │     │ created_at  │
-│ id (bigint) │     │ periode_id  │────┐└─────────────┘
-│ action      │     │ created_at  │    │
-│ detail      │     └─────────────┘    │
+│ status      │     │ slug        │     │ kategori    │
+│ display_name│     │ lokasi      │     │ instansi    │
+│ no_hp       │     │ tgl_mulai   │     │ no_hp       │
+│ created_at  │     │ tgl_selesai │     │ tujuan      │
+└─────────────┘     │ jam_mulai   │     │ qr_token    │
+                    │ jam_selesai │     │ status      │
+┌─────────────┐     │ grace_period│     │ waktu_dtg   │
+│ activities  │     │ status      │     │ scanned_by  │
+├─────────────┤     │ periode_id  │────┐│ created_at  │
+│ id (bigint) │     │ created_at  │    │└─────────────┘
+│ action      │     └─────────────┘    │
+│ detail      │                        │
 │ timestamp   │                        │
 │ user_id     │                        │
 └─────────────┘                        │
@@ -381,7 +409,7 @@ npm run lint
 
 ---
 
-## 🧪 Scripts
+## Scripts
 
 | Script | Perintah | Deskripsi |
 |--------|----------|-----------|
@@ -392,7 +420,7 @@ npm run lint
 
 ---
 
-## 📦 Dependencies Utama
+## Dependencies Utama
 
 ```json
 {
@@ -401,20 +429,20 @@ npm run lint
   "react-dom": "19.2.4",
   "@supabase/ssr": "^0.12.0",
   "@supabase/supabase-js": "^2.110.0",
+  "@tanstack/react-query": "^5.101.4",
   "tailwindcss": "^4",
   "@tailwindcss/postcss": "^4",
   "lucide-react": "^1.22.0",
   "recharts": "^3.9.2",
   "qrcode.react": "^4.2.0",
   "@yudiel/react-qr-scanner": "^2.6.0",
-  "nodemailer": "^9.0.3",
   "xlsx": "^0.18.5"
 }
 ```
 
 ---
 
-## 🌍 Environment Variables
+## Environment Variables
 
 | Variable | Deskripsi |
 |----------|-----------|
@@ -424,7 +452,7 @@ npm run lint
 
 ---
 
-## 🤝 Kontribusi
+## Kontribusi
 
 1. Fork repository
 2. Buat branch baru: `git checkout -b fitur-anda`
@@ -434,7 +462,7 @@ npm run lint
 
 ---
 
-## 📄 Lisensi
+## Lisensi
 
 Proyek ini menggunakan lisensi internal **STIKOM PGRI Banyuwangi**.
 

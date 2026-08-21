@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireRole } from "@/lib/api-helpers";
+import { requireRole, makeUniqueSlug } from "@/lib/api-helpers";
 
 export async function PUT(request, { params }) {
   const { id } = await params;
@@ -23,10 +23,11 @@ export async function PUT(request, { params }) {
       if (body[key] !== undefined) updates[key] = body[key];
     }
     if (updates.nama_acara) {
-      updates.slug = updates.nama_acara
+      const baseSlug = updates.nama_acara
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/(^-|-$)/g, "");
+      updates.slug = await makeUniqueSlug(supabase, baseSlug, { excludeId: id });
     }
     if (updates.grace_period_minutes !== undefined) {
       updates.grace_period_minutes = Number(updates.grace_period_minutes) >= 0

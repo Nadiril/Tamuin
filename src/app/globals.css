@@ -158,6 +158,44 @@ body {
   background-color: rgba(37, 99, 235, 0.04);
 }
 
+/* Hide the native scrollbar on the horizontal table scroller —
+   the sticky scrollbar strip below acts as the visible scrollbar. */
+.no-hscroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.no-hscroll::-webkit-scrollbar {
+  display: none;
+  height: 0;
+}
+
+/* Sticky horizontal scrollbar strip (guests table) */
+.scrollbar-strip {
+  height: 16px;
+  background: var(--color-surface-variant);
+  border-bottom: 1px solid var(--color-outline-variant);
+  border-radius: 0 0 14px 14px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-accent) var(--color-surface);
+}
+
+.scrollbar-strip::-webkit-scrollbar {
+  height: 12px;
+}
+
+.scrollbar-strip::-webkit-scrollbar-track {
+  background: var(--color-surface);
+  border-radius: 999px;
+  margin: 2px;
+}
+
+.scrollbar-strip::-webkit-scrollbar-thumb {
+  background: var(--color-accent);
+  border-radius: 999px;
+  border: 2px solid var(--color-surface);
+}
+
 /* ── Login page ───────────────────────────────────────────── */
 
 /* Subtle noise texture overlay */

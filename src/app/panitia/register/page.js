@@ -10,7 +10,6 @@ import {
   User,
   Building2,
   Phone,
-  Mail,
   Tag,
   CalendarRange,
   MapPin,
@@ -41,7 +40,6 @@ function RegisterContent() {
     nama: "",
     instansi: "",
     no_hp: "",
-    email: "",
     nama_mahasiswa: "",
     alamat: "",
     kategori_tamu: "reguler",
@@ -84,7 +82,6 @@ function RegisterContent() {
         nama: form.nama.trim(),
         instansi: form.instansi.trim(),
         no_hp: form.no_hp.trim() || null,
-        email: form.email.trim() || null,
         nama_mahasiswa: isVip ? "-" : form.nama_mahasiswa.trim(),
         alamat: form.alamat.trim(),
         kategori_tamu: form.kategori_tamu,
@@ -92,7 +89,7 @@ function RegisterContent() {
       if (result) {
         logActivity({ action: "create_guest", detail: `Registrasi tamu "${form.nama.trim()}" di "${selectedEvent?.nama_acara}"` });
         setToast({ id: Date.now(), message: "Tamu berhasil diregistrasi!", type: "success" });
-        setForm({ nama: "", instansi: "", no_hp: "", email: "", nama_mahasiswa: "", alamat: "", kategori_tamu: "reguler" });
+        setForm({ nama: "", instansi: "", no_hp: "", nama_mahasiswa: "", alamat: "", kategori_tamu: "reguler" });
       } else {
         setToast({ id: Date.now(), message: "Gagal meregistrasi tamu", type: "error" });
       }
@@ -227,39 +224,20 @@ function RegisterContent() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="no_hp" className="text-sm font-medium text-foreground mb-1.5 block">
-                    No. HP
-                  </label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <input
-                      id="no_hp"
-                      type="tel"
-                      placeholder="08xxxxxxxxxx"
-                      value={form.no_hp}
-                      onChange={(e) => updateField("no_hp", e.target.value)}
-                      className="w-full h-10 rounded-lg bg-white border border-border pl-10 pr-3.5 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-ring focus:border-input-focus transition-all"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label htmlFor="email" className="text-sm font-medium text-foreground mb-1.5 block">
-                    Email
-                  </label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <input
-                      id="email"
-                      type="email"
-                      placeholder="email@contoh.com"
-                      value={form.email}
-                      onChange={(e) => updateField("email", e.target.value)}
-                      className="w-full h-10 rounded-lg bg-white border border-border pl-10 pr-3.5 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-ring focus:border-input-focus transition-all"
-                    />
-                  </div>
+              <div>
+                <label htmlFor="no_hp" className="text-sm font-medium text-foreground mb-1.5 block">
+                  No. HP
+                </label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <input
+                    id="no_hp"
+                    type="tel"
+                    placeholder="08xxxxxxxxxx"
+                    value={form.no_hp}
+                    onChange={(e) => updateField("no_hp", e.target.value)}
+                    className="w-full h-10 rounded-lg bg-white border border-border pl-10 pr-3.5 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-ring focus:border-input-focus transition-all"
+                  />
                 </div>
               </div>
 

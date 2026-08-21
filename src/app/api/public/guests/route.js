@@ -8,13 +8,13 @@ export async function POST(request) {
   try {
     const body = await request.json();
     const { acara_id } = body;
-    const nama = sanitize(body.nama);
+    const nama = sanitize(body.nama) || "—";
     const instansi = sanitize(body.instansi);
     const tujuan = body.tujuan ? sanitize(body.tujuan) : null;
     const no_hp = body.no_hp ? sanitize(body.no_hp).slice(0, 20) : null;
     const alamat = sanitize(body.alamat);
 
-    const err = validate(nama, "Nama") || validate(alamat, "Alamat");
+    const err = validate(alamat, "Alamat");
     if (err) return NextResponse.json({ error: err }, { status: 400 });
 
     if (!acara_id || isNaN(Number(acara_id))) {
@@ -46,7 +46,7 @@ export async function POST(request) {
     const acaraId = Number(acara_id);
     const fields = ["id", "nama", "instansi", "status_kehadiran", "waktu_kedatangan"];
 
-    // Cegah duplikat: HP/email cocok = orang yang sama → balas data lama (idempoten)
+    // Cegah duplikat: HP cocok = orang yang sama → balas data lama (idempoten)
     let existing = null;
     if (no_hp) {
       const { data: dup } = await supabase
@@ -57,8 +57,8 @@ export async function POST(request) {
         .limit(1);
       existing = dup && dup.length > 0 ? dup[0] : null;
     }
-    // Tanpa HP/email, gunakan nama sebagai petunjuk untuk mencegah submit ganda
-    if (!existing) {
+    // Tanpa HP, gunakan nama sebagai petunjuk untuk mencegah submit ganda (hanya jika nama diisi)
+    if (!existing && nama) {
       const namePattern = nama.replace(/[\\%_]/g, (m) => "\\" + m);
       const { data: dup } = await supabase
         .from("guests")
@@ -77,7 +77,7 @@ export async function POST(request) {
       instansi: instansi || null,
       tujuan,
       no_hp,
-      nama_mahasiswa: nama,
+      nama_mahasiswa: nama || "—",
       alamat,
       kategori_tamu: "reguler",
       status_kehadiran,

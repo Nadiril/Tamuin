@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import {
   LayoutDashboard,
@@ -27,7 +27,9 @@ const navItems = [
 export default function PanitiaSidebar({ collapsed, onToggleCollapse, mobileOpen, onCloseMobile }) {
   const pathname = usePathname() ?? "";
   const router = useRouter();
-  const supabase = createClient();
+  const supabaseRef = useRef(null);
+  if (!supabaseRef.current) supabaseRef.current = createClient();
+  const supabase = supabaseRef.current;
 
   useEffect(() => {
     const handleResize = () => {

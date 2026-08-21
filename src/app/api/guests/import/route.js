@@ -11,11 +11,11 @@ function normalizeRow(g) {
   const isVip = validKategori !== "reguler";
   const no_hp = g.no_hp ? sanitizeCSV(g.no_hp).slice(0, 20) || null : null;
   return {
-    nama: sanitizeCSV(g.nama) || "Tamu",
+    nama: sanitizeCSV(g.nama) || "—",
     instansi: sanitizeCSV(g.instansi) || null,
     no_hp,
     tujuan: g.tujuan ? sanitizeCSV(g.tujuan) : null,
-    nama_mahasiswa: isVip ? "-" : sanitizeCSV(g.nama_mahasiswa) || sanitizeCSV(g.nama) || "Tamu",
+    nama_mahasiswa: isVip ? "-" : sanitizeCSV(g.nama_mahasiswa) || sanitizeCSV(g.nama) || "—",
     alamat: sanitizeCSV(g.alamat),
     kategori_tamu: validKategori,
     status_kehadiran: "tidak_hadir",

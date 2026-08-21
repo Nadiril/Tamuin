@@ -3,8 +3,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
-import { QrCode, ChevronLeft, ChevronRight, LogOut } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { QrCode, ChevronLeft, ChevronRight, LogOut, Settings } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useProfileQuery } from "@/lib/queries/useProfileQuery";
 
@@ -50,14 +50,19 @@ const navItems = [
       </svg>
     ),
   },
-  {
+{
     label: "Kelola Pengguna",
     href: "/admin/users",
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a4 4 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.858M7 20H2v-2a4 4 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a4 4 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.858M7 20H2v-2a4 4 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.858m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
       </svg>
     ),
+  },
+  {
+    label: "Pengaturan",
+    href: "/admin/settings",
+    icon: <Settings className="w-5 h-5" />,
   },
 ];
 
@@ -67,7 +72,9 @@ export default function Sidebar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const { data: profile } = useProfileQuery();
-  const supabase = createClient();
+  const supabaseRef = useRef(null);
+  if (!supabaseRef.current) supabaseRef.current = createClient();
+  const supabase = supabaseRef.current;
 
   const displayName = profile?.display_name || "Admin";
   const email = profile?.email || "";
@@ -199,7 +206,7 @@ export default function Sidebar() {
       {/* ── Mobile: hamburger button ── */}
       <button
         onClick={() => setMobileOpen(true)}
-        className="lg:hidden fixed top-4 left-4 z-50 w-9 h-9 rounded-xl bg-card border border-border flex items-center justify-center text-muted hover:text-foreground transition-colors"
+        className="lg:hidden fixed top-2.5 left-4 z-50 w-9 h-9 rounded-xl bg-card border border-border flex items-center justify-center text-muted hover:text-foreground transition-colors"
         aria-label="Buka menu"
       >
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

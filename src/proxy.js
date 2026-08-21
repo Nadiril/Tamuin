@@ -21,11 +21,17 @@ export default async function proxy(request) {
       return supabaseResponse;
     }
 
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("role")
       .eq("id", user.id)
       .single();
+
+    if (profileError) {
+      console.error("Supabase Profile Query Error in Proxy:", profileError);
+    } else {
+      console.log("Supabase Profile Query Success in Proxy:", profile);
+    }
 
     const role = profile?.role;
 

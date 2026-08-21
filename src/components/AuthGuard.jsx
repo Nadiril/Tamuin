@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 export default function AuthGuard({ children }) {
   const router = useRouter();
+  const routerRef = useRef(router);
+  routerRef.current = router;
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
@@ -14,13 +16,13 @@ export default function AuthGuard({ children }) {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (cancelled) return;
       if (!session) {
-        router.push("/");
+        routerRef.current.push("/");
       } else {
         setChecking(false);
       }
     });
     return () => { cancelled = true; };
-  }, [router]);
+  }, []);
 
   if (checking) {
     return (

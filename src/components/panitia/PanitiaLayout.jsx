@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import PanitiaSidebar from "./PanitiaSidebar";
@@ -12,6 +12,8 @@ import { useProfileQuery } from "@/lib/queries/useProfileQuery";
 function PanitiaLayoutInner({ children }) {
   const pathname = usePathname();
   const router = useRouter();
+  const routerRef = useRef(router);
+  routerRef.current = router;
   const { data: profile, isLoading } = useProfileQuery();
   const panitiaName = profile?.display_name || "Panitia";
   const [collapsed, setCollapsed] = useState(false);
@@ -19,9 +21,9 @@ function PanitiaLayoutInner({ children }) {
 
   useEffect(() => {
     if (!isLoading && !profile) {
-      router.push("/");
+      routerRef.current.push("/");
     }
-  }, [isLoading, profile, router]);
+  }, [isLoading, profile]);
 
   useEffect(() => {
     const mq = window.matchMedia("(min-width: 1024px)");

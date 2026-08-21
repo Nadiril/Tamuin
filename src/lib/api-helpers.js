@@ -28,12 +28,6 @@ export function validate(field, label, maxLength = 200) {
   return null;
 }
 
-export function normalizeEmail(value) {
-  if (!value || typeof value !== "string") return null;
-  const email = value.trim().toLowerCase();
-  return email && email.length <= 254 && email.includes("@") ? email : null;
-}
-
 export function getClientIp(request) {
   return request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
     || request.headers.get("x-real-ip")
@@ -102,28 +96,13 @@ export async function requireRole(roles = ["admin", "panitia"]) {
   return { supabase, user, profile };
 }
 
-function isMissingEmailColumn(error) {
-  if (!error) return false;
-  if (error.code === "42703" || error.code === "PGRST204") return true;
-  return /column[\s\S]*email[\s\S]*does not exist/i.test(error.message || "");
-}
-
 export async function insertGuests(supabase, rows, { select = "id", single = false } = {}) {
-  const run = (payload) => {
-    let query = supabase.from("guests").insert(payload).select(select);
-    if (single) query = query.single();
-    return query;
-  };
-
-  let result = await run(rows);
-  // Kolom email belum ada di database (email_migration.sql belum dijalankan)
-  if (result.error && isMissingEmailColumn(result.error)) {
-    result = await run(rows.map(({ email, ...rest }) => rest));
-  }
-  return result;
+  let query = supabase.from("guests").insert(rows).select(select);
+  if (single) query = query.single();
+  return query;
 }
 
-export async function findDuplicateGuest(supabase, { acara_id, no_hp = null, email = null, excludeId = null }) {
+export async function findDuplicateGuest(supabase, { acara_id, no_hp = null, excludeId = null }) {
   if (!acara_id) return null;
   if (no_hp) {
     const { data } = await supabase
@@ -134,14 +113,26 @@ export async function findDuplicateGuest(supabase, { acara_id, no_hp = null, ema
       .limit(1);
     if (data && data.length > 0 && (!excludeId || data[0].id !== excludeId)) return data[0];
   }
-  if (email) {
-    const { data } = await supabase
-      .from("guests")
-      .select("id, nama")
-      .eq("acara_id", acara_id)
-      .eq("email", email)
-      .limit(1);
-    if (data && data.length > 0 && (!excludeId || data[0].id !== excludeId)) return data[0];
-  }
   return null;
+}
+
+/**
+ * Builds a DB-unique slug for an event. `events.slug` has a UNIQUE
+ * constraint, so when a base slug is taken it appends -2, -3, ... until a
+ * free one is found. `excludeId` lets edits keep their own slug.
+ */
+export async function makeUniqueSlug(supabase, baseSlug, { excludeId = null } = {}) {
+  const clean = (baseSlug || "").trim().replace(/(^-|-$)/g, "").slice(0, 100);
+  const base = clean || `acara-${Date.now()}`;
+  let candidate = base;
+  let suffix = 2;
+
+  for (;;) {
+    let query = supabase.from("events").select("slug").eq("slug", candidate).limit(1);
+    if (excludeId) query = query.neq("id", excludeId);
+    const { data } = await query;
+    if (!data || data.length === 0) return candidate;
+    candidate = `${base}-${suffix}`;
+    suffix += 1;
+  }
 }

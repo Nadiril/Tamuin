@@ -8,7 +8,6 @@ const ALLOWED_ACTIONS = [
   "import_guest",
   "import_guests",
   "scan_guest",
-  "send_qr_email",
   "create_event",
   "update_event",
   "delete_event",

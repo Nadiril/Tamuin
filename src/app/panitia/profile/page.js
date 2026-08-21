@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useProfileQuery, useUpdateProfile } from "@/lib/queries/useProfileQuery";
@@ -20,7 +20,9 @@ import {
 
 export default function ProfilePage() {
   const router = useRouter();
-  const supabase = createClient();
+  const supabaseRef = useRef(null);
+  if (!supabaseRef.current) supabaseRef.current = createClient();
+  const supabase = supabaseRef.current;
   const { data: profile, isLoading: loading } = useProfileQuery();
   const { mutateAsync: updateProfile } = useUpdateProfile();
   const [passwordNew, setPasswordNew] = useState("");

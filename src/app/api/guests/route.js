@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { generateToken } from "@/lib/token";
-import { sanitize, normalizeEmail, requireRole, findDuplicateGuest, insertGuests } from "@/lib/api-helpers";
+import { sanitize, requireRole, findDuplicateGuest, insertGuests } from "@/lib/api-helpers";
 
 export async function GET(request) {
   const { supabase, response } = await requireRole(["admin", "panitia"]);
@@ -23,15 +23,10 @@ export async function POST(request) {
 
   try {
     const body = await request.json();
-    const nama = sanitize(body.nama);
+    const nama = sanitize(body.nama) || "—";
     const instansi = sanitize(body.instansi);
     const kategori_tamu = body.kategori_tamu || "reguler";
     const no_hp = body.no_hp ? sanitize(body.no_hp).slice(0, 20) : null;
-    const email = normalizeEmail(body.email);
-
-    if (!nama) {
-      return NextResponse.json({ error: "Nama wajib diisi" }, { status: 400 });
-    }
     if (!["reguler", "vip", "vvip"].includes(kategori_tamu)) {
       return NextResponse.json({ error: "Kategori tamu tidak valid" }, { status: 400 });
     }
@@ -44,15 +39,10 @@ export async function POST(request) {
     }
 
     const acara_id = Number(body.acara_id);
-    const duplicate = await findDuplicateGuest(supabase, { acara_id, no_hp, email });
+    const duplicate = await findDuplicateGuest(supabase, { acara_id, no_hp });
     if (duplicate) {
-      const reason = no_hp && email
-        ? "nomor HP atau email"
-        : no_hp
-          ? "nomor HP"
-          : "email";
       return NextResponse.json(
-        { error: `Tamu dengan ${reason} yang sama sudah terdaftar di acara ini (${duplicate.nama})` },
+        { error: `Tamu dengan nomor HP yang sama sudah terdaftar di acara ini (${duplicate.nama})` },
         { status: 409 },
       );
     }
@@ -66,7 +56,6 @@ export async function POST(request) {
       nama,
       instansi: instansi || null,
       no_hp,
-      ...(email ? { email } : {}),
       tujuan: body.tujuan ? sanitize(body.tujuan) : null,
       nama_mahasiswa,
       alamat,
@@ -81,7 +70,7 @@ export async function POST(request) {
     if (error) {
       if (error.code === "23505") {
         return NextResponse.json(
-          { error: "Tamu dengan nomor HP atau email yang sama sudah terdaftar di acara ini" },
+          { error: "Tamu dengan nomor HP yang sama sudah terdaftar di acara ini" },
           { status: 409 },
         );
       }

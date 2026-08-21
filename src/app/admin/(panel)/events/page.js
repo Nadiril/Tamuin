@@ -72,8 +72,8 @@ export default function EventsPage() {
       await logActivity({ action: "create_event", detail: `Membuat acara "${event.nama_acara}"` });
       resetForm();
       showToast("Acara berhasil dibuat!");
-    } catch {
-      showToast("Gagal membuat acara. Nama/slug mungkin sudah dipakai.", "error");
+    } catch (err) {
+      showToast(err.message || "Gagal membuat acara. Silakan coba lagi.", "error");
     }
   };
 
@@ -110,8 +110,8 @@ export default function EventsPage() {
       await logActivity({ action: "update_event", detail: `Mengedit acara "${newEvent.nama_acara}"` });
       resetForm();
       showToast("Acara berhasil diperbarui!");
-    } catch {
-      showToast("Gagal memperbarui acara. Silakan coba lagi.", "error");
+    } catch (err) {
+      showToast(err.message || "Gagal memperbarui acara. Silakan coba lagi.", "error");
     }
   };
 

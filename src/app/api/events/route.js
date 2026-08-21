@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { sanitize, requireRole } from "@/lib/api-helpers";
+import { sanitize, requireRole, makeUniqueSlug } from "@/lib/api-helpers";
 
 export const dynamic = "force-dynamic";
 
@@ -26,14 +26,21 @@ export async function POST(request) {
       return NextResponse.json({ error: "Nama acara, lokasi, tanggal mulai, dan jam mulai wajib diisi" }, { status: 400 });
     }
 
-    const slug = (body.nama_acara || "")
+    const baseSlug = (body.nama_acara || "")
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)/g, "");
+    const slug = await makeUniqueSlug(supabase, baseSlug);
 
-    // Assign event to the active period (deterministic auto-fill, max 4 per period):
-    // join the latest period if it still has room, otherwise start a new period.
-    const periode_id = await resolvePeriodId(supabase);
+    // Assign event to the active period (deterministic auto-fill, max 4 per
+    // period). Non-blocking: if the periodes bookkeeping fails (e.g. missing
+    // table/policy), the event is still created without a period.
+    let periode_id = null;
+    try {
+      periode_id = await resolvePeriodId(supabase);
+    } catch (err) {
+      console.error("[events] resolvePeriodId failed, continuing without periode:", err);
+    }
 
     const record = {
       nama_acara: sanitize(body.nama_acara),
@@ -46,7 +53,7 @@ export async function POST(request) {
       status: body.status || "akan_datang",
       slug,
       created_by: user.id,
-      periode_id,
+      ...(periode_id ? { periode_id } : {}),
     };
 
     const { data, error } = await supabase

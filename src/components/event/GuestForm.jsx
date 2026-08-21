@@ -180,7 +180,7 @@ export default function GuestForm({ event }) {
             )}
           </div>
           <form onSubmit={handleSubmit} className="space-y-5">
-            <Input id="guest-name" label="Nama Lengkap" placeholder="Masukkan nama lengkap Anda" value={form.nama} onChange={(e) => setForm({ ...form, nama: e.target.value })} required icon={
+            <Input id="guest-name" label="Nama Lengkap (Opsional)" placeholder="Opsional - Masukkan nama lengkap Anda" value={form.nama} onChange={(e) => setForm({ ...form, nama: e.target.value })} icon={
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
             } />
             <Input id="guest-instansi" label="Instansi / Lembaga" placeholder="Opsional - Contoh: Universitas Airlangga" value={form.instansi} onChange={(e) => setForm({ ...form, instansi: e.target.value })} icon={

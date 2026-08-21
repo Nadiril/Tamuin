@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { createPortal } from "react-dom";
 import Input from "./Input";
 import Button from "./Button";
@@ -19,18 +19,21 @@ const statusKehadiranMap = {
   tidak_hadir: { badge: "bg-danger-muted text-danger border border-danger/20", label: "Tidak Hadir" },
 };
 
-export default function GuestTable({ guests, showEvent = false, events = [], onEdit, onDelete }) {
+export default function GuestTable({ guests, showEvent = false, events = [], onEdit, onDelete, onDeleteAll, onResetAttendance }) {
   const [search, setSearch] = useState("");
   const [kategoriFilter, setKategoriFilter] = useState("");
   const [qrGuest, setQrGuest] = useState(null);
   const [detailGuest, setDetailGuest] = useState(null);
-  const [sendingEmail, setSendingEmail] = useState(false);
-  const [emailStatus, setEmailStatus] = useState(null);
   const [openMenuId, setOpenMenuId] = useState(null);
   const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
   const menuRef = useRef(null);
   const triggerRefs = useRef({});
   const qrCanvasRef = useRef(null);
+  const tableWrapRef = useRef(null);
+  const stripRef = useRef(null);
+  const syncingRef = useRef(false);
+  const [hOverflow, setHOverflow] = useState(false);
+  const [spacerWidth, setSpacerWidth] = useState(1050);
 
   useEffect(() => {
     if (!openMenuId) return;
@@ -104,31 +107,54 @@ export default function GuestTable({ guests, showEvent = false, events = [], onE
   const hasActions = !!(onEdit || onDelete);
   const cols = (showEvent ? 9 : 8) + (hasActions ? 1 : 0);
 
-  const handleSendQR = async (guest) => {
-    if (!guest.email) {
-      setEmailStatus({ type: "error", message: `Tamu "${guest.nama}" tidak memiliki alamat email` });
-      setTimeout(() => setEmailStatus(null), 4000);
-      return;
-    }
-    setSendingEmail(true);
-    try {
-      const res = await fetch("/api/send-qr", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ guest_ids: [guest.id], acara_id: guest.acara_id }),
-      });
-      const data = await res.json();
-      if (res.ok && data.results?.[0]?.status === "sent") {
-        setEmailStatus({ type: "success", message: `QR Code terkirim ke ${guest.email}` });
-      } else {
-        setEmailStatus({ type: "error", message: data.results?.[0]?.error || "Gagal mengirim email" });
+  // ── Sticky horizontal scrollbar (synced with the table container) ──
+  // Wheel over the strip scrolls horizontally without Shift; vertical
+  // page scrolling over the table body is left untouched.
+  useEffect(() => {
+    const strip = stripRef.current;
+    if (!strip) return;
+    const onWheel = (e) => {
+      if (e.deltaY !== 0) {
+        e.preventDefault();
+        strip.scrollLeft += e.deltaY;
       }
-    } catch {
-      setEmailStatus({ type: "error", message: "Gagal terhubung ke server" });
-    } finally {
-      setSendingEmail(false);
-      setTimeout(() => setEmailStatus(null), 4000);
-    }
+    };
+    strip.addEventListener("wheel", onWheel, { passive: false });
+    return () => strip.removeEventListener("wheel", onWheel);
+  }, [hOverflow]);
+
+  // Track the table's scroll width so the strip's thumb maps 1:1 with
+  // the table content, and only show the strip when there is real overflow.
+  useLayoutEffect(() => {
+    const wrap = tableWrapRef.current;
+    if (!wrap) return;
+    const measure = () => {
+      const sw = wrap.scrollWidth;
+      setSpacerWidth(sw);
+      setHOverflow(sw > wrap.clientWidth + 1);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(wrap);
+    return () => ro.disconnect();
+  }, [filtered.length, showEvent, hasActions]);
+
+  const handleTableScroll = () => {
+    const wrap = tableWrapRef.current;
+    const strip = stripRef.current;
+    if (!wrap || !strip || syncingRef.current) return;
+    syncingRef.current = true;
+    strip.scrollLeft = wrap.scrollLeft;
+    syncingRef.current = false;
+  };
+
+  const handleStripScroll = () => {
+    const wrap = tableWrapRef.current;
+    const strip = stripRef.current;
+    if (!wrap || !strip || syncingRef.current) return;
+    syncingRef.current = true;
+    wrap.scrollLeft = strip.scrollLeft;
+    syncingRef.current = false;
   };
 
   const getQrUrl = (token) => {
@@ -174,11 +200,28 @@ export default function GuestTable({ guests, showEvent = false, events = [], onE
             <option value="vvip">VVIP</option>
           </select>
         </div>
-        <p className="text-sm text-muted whitespace-nowrap">
-          Menampilkan{" "}
-          <span className="text-foreground font-medium">{filtered.length}</span>{" "}
-          dari {guests.length} tamu
-        </p>
+        <div className="flex flex-wrap items-center gap-3">
+          <p className="text-sm text-muted whitespace-nowrap">
+            Menampilkan{" "}
+            <span className="text-foreground font-medium">{filtered.length}</span>{" "}
+            dari {guests.length} tamu
+          </p>
+          {onDeleteAll && (
+            <Button
+              onClick={onDeleteAll}
+              variant="danger"
+              size="sm"
+              title="Hapus semua data tamu"
+              icon={
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              }
+            >
+              Hapus Semua
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Card Layout for Mobile & Tablet Portrait */}
@@ -208,15 +251,14 @@ export default function GuestTable({ guests, showEvent = false, events = [], onE
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="w-9 h-9 rounded-full bg-accent-muted text-accent flex items-center justify-center text-xs font-bold shrink-0">
-                    {guest.nama
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")
-                      .slice(0, 2)}
+                    {(() => {
+                      const src = (guest.nama && guest.nama !== "—") ? guest.nama : (guest.nama_mahasiswa && guest.nama_mahasiswa !== "-" && guest.nama_mahasiswa !== "—") ? guest.nama_mahasiswa : null;
+                      return src ? src.split(" ").map((n) => n[0]).join("").slice(0, 2) : "?";
+                    })()}
                   </div>
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-foreground truncate" title={guest.nama}>
-                      {guest.nama}
+                      {guest.nama && guest.nama !== "—" ? guest.nama : guest.nama_mahasiswa && guest.nama_mahasiswa !== "-" && guest.nama_mahasiswa !== "—" ? guest.nama_mahasiswa : "—"}
                     </p>
                     <p className="text-xs text-muted truncate" title={guest.instansi}>
                       {guest.instansi || "—"}
@@ -300,9 +342,19 @@ export default function GuestTable({ guests, showEvent = false, events = [], onE
       </div>
 
       {/* Table (desktop & tablet landscape) */}
-      <div className="hidden lg:block glass-card rounded-2xl overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[1050px]">
+      <div className="relative">
+        {hOverflow && (
+          <div
+            ref={stripRef}
+            onScroll={handleStripScroll}
+            className="sticky top-14 lg:top-16 z-20 hidden lg:block overflow-x-auto scrollbar-strip"
+          >
+            <div style={{ width: spacerWidth, height: 1 }} />
+          </div>
+        )}
+        <div className="hidden lg:block glass-card rounded-2xl overflow-hidden">
+          <div ref={tableWrapRef} onScroll={handleTableScroll} className="overflow-x-auto no-hscroll">
+            <table className="w-full min-w-[1050px]">
             <thead>
               <tr className="border-b border-outline-variant bg-surface-variant/60">
                 <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-5 py-3 whitespace-nowrap">
@@ -375,17 +427,16 @@ export default function GuestTable({ guests, showEvent = false, events = [], onE
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-3 max-w-full">
                         <div className="w-8 h-8 rounded-full bg-accent-muted text-accent flex items-center justify-center text-xs font-bold shrink-0">
-                          {guest.nama
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")
-                            .slice(0, 2)}
+                          {(() => {
+                            const src = (guest.nama && guest.nama !== "—") ? guest.nama : (guest.nama_mahasiswa && guest.nama_mahasiswa !== "-" && guest.nama_mahasiswa !== "—") ? guest.nama_mahasiswa : null;
+                            return src ? src.split(" ").map((n) => n[0]).join("").slice(0, 2) : "?";
+                          })()}
                         </div>
                         <span
                           className="text-sm font-medium text-foreground truncate max-w-[200px] lg:max-w-[280px]"
-                          title={guest.nama}
+                          title={guest.nama && guest.nama !== "—" ? guest.nama : guest.nama_mahasiswa || "—"}
                         >
-                          {guest.nama}
+                          {guest.nama && guest.nama !== "—" ? guest.nama : guest.nama_mahasiswa && guest.nama_mahasiswa !== "-" && guest.nama_mahasiswa !== "—" ? guest.nama_mahasiswa : "—"}
                         </span>
                       </div>
                     </td>
@@ -475,6 +526,7 @@ export default function GuestTable({ guests, showEvent = false, events = [], onE
               )}
             </tbody>
           </table>
+          </div>
         </div>
       </div>
 
@@ -526,19 +578,24 @@ export default function GuestTable({ guests, showEvent = false, events = [], onE
             </svg>
             Lihat QR Code
           </button>
-          <button
-            onClick={() => {
-              const g = guests.find((g) => g.id === openMenuId);
-              if (g) handleSendQR(g);
-              setOpenMenuId(null);
-            }}
-            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-foreground hover:bg-input/50 transition-colors cursor-pointer"
-          >
-            <svg className="w-4 h-4 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-            </svg>
-            Kirim QR via Email
-          </button>
+          {onResetAttendance && (() => {
+            const g = guests.find((x) => x.id === openMenuId);
+            if (!g || g.status_kehadiran === "tidak_hadir") return null;
+            return (
+              <button
+                onClick={() => {
+                  onResetAttendance(g);
+                  setOpenMenuId(null);
+                }}
+                className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-warning hover:bg-warning/10 transition-colors cursor-pointer"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Reset Status Kehadiran
+              </button>
+            );
+          })()}
           <div className="border-t border-border my-1.5 mx-3" />
           {onDelete && (
             <button
@@ -574,10 +631,13 @@ export default function GuestTable({ guests, showEvent = false, events = [], onE
             <div className="space-y-4 overflow-y-auto flex-1 pr-1">
               <div className="flex items-center gap-3 pb-4 border-b border-border/50">
                 <div className="w-12 h-12 rounded-full bg-accent-muted text-accent flex items-center justify-center text-lg font-bold shrink-0">
-                  {detailGuest.nama.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                  {(() => {
+                    const src = (detailGuest.nama && detailGuest.nama !== "—") ? detailGuest.nama : (detailGuest.nama_mahasiswa && detailGuest.nama_mahasiswa !== "-" && detailGuest.nama_mahasiswa !== "—") ? detailGuest.nama_mahasiswa : null;
+                    return src ? src.split(" ").map((n) => n[0]).join("").slice(0, 2) : "?";
+                  })()}
                 </div>
                 <div>
-                  <p className="font-semibold text-foreground">{detailGuest.nama}</p>
+                  <p className="font-semibold text-foreground">{(detailGuest.nama && detailGuest.nama !== "—") ? detailGuest.nama : (detailGuest.nama_mahasiswa && detailGuest.nama_mahasiswa !== "-" && detailGuest.nama_mahasiswa !== "—") ? detailGuest.nama_mahasiswa : "—"}</p>
                   <p className="text-sm text-muted">{detailGuest.instansi || "—"}</p>
                 </div>
               </div>
@@ -623,24 +683,6 @@ export default function GuestTable({ guests, showEvent = false, events = [], onE
         </div>
       )}
 
-      {/* Email Status Toast */}
-      {emailStatus && (
-        <div className="fixed bottom-4 right-4 left-4 sm:left-auto sm:bottom-6 sm:right-6 z-[60] flex justify-end animate-in">
-          <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border shadow-lg bg-white ${
-            emailStatus.type === "success" ? "border-success/20" : "border-danger/20"
-          }`}>
-            <svg className={`w-5 h-5 ${emailStatus.type === "success" ? "text-success" : "text-danger"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              {emailStatus.type === "success" ? (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              )}
-            </svg>
-            <p className="text-sm font-medium text-foreground">{emailStatus.message}</p>
-          </div>
-        </div>
-      )}
-
       {/* QR Code Modal */}
       {qrGuest && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -677,7 +719,8 @@ export default function GuestTable({ guests, showEvent = false, events = [], onE
                 onClick={() => {
                   const canvas = qrCanvasRef.current;
                   if (!canvas) return;
-                  const fileName = `qr-${qrGuest.nama}-${getEventName(qrGuest.acara_id)}.png`.replace(/[\s/\\]+/g, "-").replace(/[^a-zA-Z0-9\-]/g, "");
+                  const guestName = (qrGuest.nama && qrGuest.nama !== "—") ? qrGuest.nama : (qrGuest.nama_mahasiswa && qrGuest.nama_mahasiswa !== "-" && qrGuest.nama_mahasiswa !== "—") ? qrGuest.nama_mahasiswa : "tamu";
+                  const fileName = `${guestName}.png`.replace(/[\s/\\:/*?"<>|]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
                   const out = document.createElement("canvas");
                   out.width = 500;
                   out.height = 500;

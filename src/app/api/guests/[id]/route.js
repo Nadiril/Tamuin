@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { sanitize, normalizeEmail, requireRole, findDuplicateGuest } from "@/lib/api-helpers";
+import { sanitize, requireRole, findDuplicateGuest } from "@/lib/api-helpers";
 
 export async function PUT(request, { params }) {
   const { id } = await params;
@@ -12,7 +12,6 @@ export async function PUT(request, { params }) {
       "nama",
       "instansi",
       "no_hp",
-      "email",
       "tujuan",
       "nama_mahasiswa",
       "alamat",
@@ -25,7 +24,6 @@ export async function PUT(request, { params }) {
     for (const key of allowed) {
       if (body[key] !== undefined) {
         if (key === "acara_id") updates[key] = Number(body[key]);
-        else if (key === "email") updates[key] = normalizeEmail(body[key]);
         else updates[key] = sanitize(body[key]);
       }
     }
@@ -41,51 +39,37 @@ export async function PUT(request, { params }) {
     }
     if (updates.no_hp !== undefined) updates.no_hp = updates.no_hp ? updates.no_hp.slice(0, 20) : null;
 
-    if (updates.acara_id !== undefined || updates.no_hp !== undefined || updates.email !== undefined) {
+    if (updates.acara_id !== undefined || updates.no_hp !== undefined) {
       const { data: current } = await supabase
         .from("guests")
-        .select("acara_id, no_hp, email")
+        .select("acara_id, no_hp")
         .eq("id", id)
         .single();
 
       if (current) {
         const acara_id = updates.acara_id ?? current.acara_id;
         const no_hp = updates.no_hp !== undefined ? updates.no_hp : current.no_hp;
-        const email = updates.email !== undefined ? updates.email : current.email;
-        const duplicate = await findDuplicateGuest(supabase, { acara_id, no_hp, email, excludeId: id });
+        const duplicate = await findDuplicateGuest(supabase, { acara_id, no_hp, excludeId: id });
         if (duplicate) {
           return NextResponse.json(
-            { error: `Tamu dengan nomor HP atau email yang sama sudah terdaftar di acara ini (${duplicate.nama})` },
+            { error: `Tamu dengan nomor HP yang sama sudah terdaftar di acara ini (${duplicate.nama})` },
             { status: 409 },
           );
         }
       }
     }
 
-    let updateResult = await supabase
+    const { data, error } = await supabase
       .from("guests")
       .update(updates)
       .eq("id", id)
       .select()
       .single();
 
-    // Kolom email belum ada di database (email_migration.sql belum dijalankan)
-    if (updateResult.error && updateResult.error.code === "42703" && updates.email !== undefined) {
-      const { email, ...rest } = updates;
-      updateResult = await supabase
-        .from("guests")
-        .update(rest)
-        .eq("id", id)
-        .select()
-        .single();
-    }
-
-    const { data, error } = updateResult;
-
     if (error) {
       if (error.code === "23505") {
         return NextResponse.json(
-          { error: "Tamu dengan nomor HP atau email yang sama sudah terdaftar di acara ini" },
+          { error: "Tamu dengan nomor HP yang sama sudah terdaftar di acara ini" },
           { status: 409 },
         );
       }

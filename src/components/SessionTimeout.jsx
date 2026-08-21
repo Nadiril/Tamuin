@@ -36,6 +36,8 @@ function formatCountdown(ms) {
 
 export default function SessionTimeout({ role = "admin" }) {
   const router = useRouter();
+  const routerRef = useRef(router);
+  routerRef.current = router;
   const supabaseRef = useRef(null);
   const [expired, setExpired] = useState(false);
 
@@ -57,13 +59,13 @@ export default function SessionTimeout({ role = "admin" }) {
 
   const handleGoToLogin = useCallback(async () => {
     await endSession();
-    router.push("/");
-  }, [endSession, router]);
+    routerRef.current.push("/");
+  }, [endSession]);
 
   const handleForceLogout = useCallback(async () => {
     await endSession();
-    router.push("/");
-  }, [endSession, router]);
+    routerRef.current.push("/");
+  }, [endSession]);
 
   const { showWarning, remaining, extend, forceTimeout } = useIdleTimer({
     timeout: TIMEOUT,

@@ -58,8 +58,9 @@ export function useEventMutations() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(event),
       });
-      if (!res.ok) throw new Error('Gagal membuat acara');
-      return res.json();
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error((data && data.error) || 'Gagal membuat acara');
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: eventsKey() });
@@ -73,8 +74,9 @@ export function useEventMutations() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates),
       });
-      if (!res.ok) throw new Error('Gagal mengupdate acara');
-      return res.json();
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error((data && data.error) || 'Gagal mengupdate acara');
+      return data;
     },
     onSuccess: (data) => {
       queryClient.setQueryData(eventsKey(), (old) => {

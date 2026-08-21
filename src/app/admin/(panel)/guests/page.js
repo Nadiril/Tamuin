@@ -10,6 +10,7 @@ import Toast from "@/components/Toast";
 import { useGuestsQuery, useGuestMutations, guestsKey } from "@/lib/queries/useGuestsQuery";
 import { useEventsQuery } from "@/lib/queries/useEventsQuery";
 import { useLogActivity } from "@/lib/queries/useActivitiesQuery";
+import { Download } from "lucide-react";
 
 export default function GuestsPage() {
   const queryClient = useQueryClient();
@@ -22,9 +23,12 @@ export default function GuestsPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingGuest, setEditingGuest] = useState(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
+  const [deletingAll, setDeletingAll] = useState(false);
+  const [resetGuest, setResetGuest] = useState(null);
+  const [resetting, setResetting] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [toast, setToast] = useState(null);
-  const [sendingBulkQr, setSendingBulkQr] = useState(false);
   const [newGuest, setNewGuest] = useState({
     nama: "",
     instansi: "",
@@ -106,41 +110,50 @@ export default function GuestsPage() {
     }
   };
 
-  const handleBulkSendQR = async () => {
-    if (!eventFilter) {
-      showToast("Pilih acara terlebih dahulu!", "error");
-      return;
-    }
-    setSendingBulkQr(true);
-    const eventGuests = guests.filter((g) => g.acara_id === parseInt(eventFilter) && g.email);
-    if (eventGuests.length === 0) {
-      showToast("Tidak ada tamu dengan alamat email di acara ini", "error");
-      setSendingBulkQr(false);
-      return;
-    }
+  const confirmDeleteAllGuests = async () => {
+    setDeletingAll(true);
     try {
-      const res = await fetch("/api/send-qr", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          guest_ids: eventGuests.map((g) => g.id),
-          acara_id: parseInt(eventFilter),
-        }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        const sent = data.results.filter((r) => r.status === "sent").length;
-        const failed = data.results.filter((r) => r.status === "failed").length;
-        const skipped = data.results.filter((r) => r.status === "skipped").length;
-        showToast(`${sent} terkirim, ${failed} gagal, ${skipped} dilewati`);
-        fetchGuests();
-      } else {
-        showToast(data.error || "Gagal mengirim QR massal", "error");
+      const query = eventFilter ? `?acara_id=${encodeURIComponent(eventFilter)}` : "";
+      const res = await fetch(`/api/guests/bulk-delete${query}`, { method: "DELETE" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || "Gagal menghapus data tamu");
       }
-    } catch {
-      showToast("Gagal terhubung ke server", "error");
+      await logActivity({
+        action: "delete_guest",
+        detail: `Menghapus tamu${eventFilter ? ` di acara ${events.find((e) => e.id === parseInt(eventFilter))?.nama_acara || eventFilter}` : " (semua acara)"}`,
+      });
+      setConfirmDeleteAll(false);
+      setConfirmDeleteId(null);
+      await fetchGuests();
+      showToast("Data tamu berhasil dihapus!");
+    } catch (err) {
+      showToast(err?.message || "Gagal menghapus data tamu. Silakan coba lagi.", "error");
     } finally {
-      setSendingBulkQr(false);
+      setDeletingAll(false);
+    }
+  };
+
+  const confirmResetAttendance = async () => {
+    if (!resetGuest) return;
+    setResetting(true);
+    try {
+      const res = await fetch(`/api/guests/${resetGuest.id}/reset-attendance`, { method: "POST" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || "Gagal mengoreksi status kehadiran");
+      }
+      await logActivity({
+        action: "update_guest",
+        detail: `Koreksi status kehadiran tamu "${resetGuest.nama}" menjadi tidak hadir`,
+      });
+      setResetGuest(null);
+      await fetchGuests();
+      showToast(`Status kehadiran "${resetGuest.nama}" direset menjadi Tidak Hadir`);
+    } catch (err) {
+      showToast(err?.message || "Gagal mengoreksi status kehadiran. Silakan coba lagi.", "error");
+    } finally {
+      setResetting(false);
     }
   };
 
@@ -179,11 +192,23 @@ export default function GuestsPage() {
     return v;
   };
 
+  const detectDelimiter = (text) => {
+    const firstLine = text.slice(0, text.indexOf("\n") === -1 ? text.length : text.indexOf("\n"));
+    const counts = { ",": 0, "\t": 0, ";": 0 };
+    for (const ch of firstLine) {
+      if (ch in counts) counts[ch]++;
+    }
+    if (counts["\t"] > counts[","] && counts["\t"] >= counts[";"]) return "\t";
+    if (counts[";"] > counts[","]) return ";";
+    return ",";
+  };
+
   const parseCSV = (text) => {
     const rows = [];
     let row = [];
     let field = "";
     let inQuotes = false;
+    const delimiter = detectDelimiter(text);
     for (let i = 0; i < text.length; i++) {
       const c = text[i];
       const next = text[i + 1];
@@ -200,7 +225,7 @@ export default function GuestsPage() {
         }
       } else if (c === '"') {
         inQuotes = true;
-      } else if (c === ",") {
+      } else if (c === delimiter) {
         row.push(field);
         field = "";
       } else if (c === "\n") {
@@ -239,7 +264,7 @@ export default function GuestsPage() {
       headers.forEach((h, idx) => {
         rowObj[h] = values[idx] || "";
       });
-      if (rowObj.nama) results.push(rowObj);
+      if (values.some((v) => v !== "")) results.push(rowObj);
     }
     return results;
   };
@@ -352,15 +377,15 @@ export default function GuestsPage() {
         subtitle="Kelola semua data tamu"
         actions={
           <div className="flex items-center gap-2">
-            {eventFilter && (
-              <Button onClick={handleBulkSendQR} disabled={sendingBulkQr} variant="secondary" title="Kirim QR Code ke semua tamu" icon={
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-              }>
-                <span className="hidden sm:inline">{sendingBulkQr ? "Mengirim..." : "Kirim QR Massal"}</span>
-              </Button>
-            )}
+            <a
+              href="/templates/template-data-tamu.csv"
+              download="template-data-tamu.csv"
+              title="Download Template CSV"
+              className="inline-flex items-center justify-center gap-2 font-medium rounded-[10px] h-10 px-4 text-sm transition-all duration-200 cursor-pointer select-none focus:outline-none focus:ring-2 focus:ring-accent/50 active:scale-[0.98] bg-surface text-foreground border border-outline hover:bg-surface-variant hover:border-border-hover"
+            >
+              <Download className="w-4 h-4 shrink-0" />
+              <span className="hidden sm:inline">Download Template CSV</span>
+            </a>
             <Button onClick={() => setShowImportModal(true)} variant="secondary" title="Import Tamu dari CSV" icon={
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
@@ -411,7 +436,13 @@ export default function GuestsPage() {
             </button>
           )}
         </div>
-        <GuestTable guests={filteredGuests} events={events} showEvent onEdit={handleEdit} onDelete={handleDelete} />
+        <GuestTable guests={filteredGuests} events={events} showEvent onEdit={handleEdit} onDelete={handleDelete} onDeleteAll={() => {
+          if (guests.length === 0) {
+            showToast("Tidak ada data tamu untuk dihapus", "error");
+            return;
+          }
+          setConfirmDeleteAll(true);
+        }} onResetAttendance={setResetGuest} />
       </div>
 
       {/* Import Modal */}
@@ -606,15 +637,12 @@ export default function GuestsPage() {
             <form onSubmit={editingGuest ? handleUpdateGuest : handleAddGuest} className="space-y-4 overflow-y-auto flex-1 pr-1 pb-2">
               <Input
                 id="guest-name"
-                label="Nama Lengkap"
-                placeholder="Masukkan nama lengkap"
+                label="Nama Lengkap (Opsional)"
+                placeholder="Opsional - Masukkan nama lengkap"
                 value={newGuest.nama}
                 onChange={(e) => setNewGuest({ ...newGuest, nama: e.target.value })}
-                required
                 icon={
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                 }
               />
               <Input
@@ -712,6 +740,61 @@ export default function GuestsPage() {
                 <Button type="submit" className="flex-1">{editingGuest ? "Simpan Perubahan" : "Simpan Tamu"}</Button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Reset Attendance Confirmation Modal */}
+      {resetGuest && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setResetGuest(null)}></div>
+          <div className="relative glass-card rounded-2xl p-6 w-full max-w-sm mx-4 glow-accent text-center">
+            <div className="w-12 h-12 rounded-full bg-warning/10 text-warning flex items-center justify-center mx-auto mb-4">
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-bold text-foreground mb-2">Reset Status Kehadiran?</h3>
+            <p className="text-sm text-muted mb-2">
+              Status <span className="font-semibold text-foreground">{resetGuest.nama}</span> akan diubah menjadi{" "}
+              <span className="font-semibold text-foreground">Tidak Hadir</span>.
+            </p>
+            <p className="text-sm text-muted mb-6">
+              Tamu dapat melakukan scan QR kembali seperti proses registrasi awal.
+            </p>
+            <div className="flex gap-3">
+              <Button type="button" variant="secondary" className="flex-1" onClick={() => setResetGuest(null)} disabled={resetting}>Batal</Button>
+              <Button type="button" variant="danger" className="flex-1" onClick={confirmResetAttendance} disabled={resetting}>
+                {resetting ? "Menyimpan..." : "Reset Status"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete All Confirmation Modal */}
+      {confirmDeleteAll && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setConfirmDeleteAll(false)}></div>
+          <div className="relative glass-card rounded-2xl p-6 w-full max-w-sm mx-4 glow-danger text-center">
+            <div className="w-12 h-12 rounded-full bg-danger/10 text-danger flex items-center justify-center mx-auto mb-4">
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-bold text-foreground mb-2">Hapus Semua Data Tamu?</h3>
+            <p className="text-sm text-muted mb-2">
+              {eventFilter
+                ? `Semua tamu di acara ${events.find((e) => e.id === parseInt(eventFilter))?.nama_acara || eventFilter} akan dihapus.`
+                : "Semua data tamu dari semua acara akan dihapus."}
+            </p>
+            <p className="text-sm font-semibold text-danger mb-6">Tindakan ini tidak dapat dibatalkan.</p>
+            <div className="flex gap-3">
+              <Button type="button" variant="secondary" className="flex-1" onClick={() => setConfirmDeleteAll(false)} disabled={deletingAll}>Batal</Button>
+              <Button type="button" variant="danger" className="flex-1" onClick={confirmDeleteAllGuests} disabled={deletingAll}>
+                {deletingAll ? "Menghapus..." : "Hapus Semua"}
+              </Button>
+            </div>
           </div>
         </div>
       )}

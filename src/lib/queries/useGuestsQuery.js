@@ -42,21 +42,24 @@ export function useGuestsQuery(filters = {}) {
 
   useRealtimeSubscription(
     'guests',
-    (payload) => {
-      queryClient.setQueryData(guestsKey({ acara_id }), (old) => {
-        if (!old) return old;
-        switch (payload.eventType) {
-          case 'INSERT':
-            return [payload.new, ...old];
-          case 'UPDATE':
-            return old.map((g) => (g.id === payload.new.id ? { ...g, ...payload.new } : g));
-          case 'DELETE':
-            return old.filter((g) => g.id !== payload.old.id);
-          default:
-            return old;
-        }
-      });
-    },
+    useCallback(
+      (payload) => {
+        queryClient.setQueryData(guestsKey({ acara_id }), (old) => {
+          if (!old) return old;
+          switch (payload.eventType) {
+            case 'INSERT':
+              return [payload.new, ...old];
+            case 'UPDATE':
+              return old.map((g) => (g.id === payload.new.id ? { ...g, ...payload.new } : g));
+            case 'DELETE':
+              return old.filter((g) => g.id !== payload.old.id);
+            default:
+              return old;
+          }
+        });
+      },
+      [queryClient, acara_id]
+    ),
     filter,
     [JSON.stringify(filter)]
   );

@@ -112,7 +112,19 @@ begin
   insert into public.activities (action, detail)
   values (
     'guest_self_scanned',
-    format('Tamu "%s" dari "%s" self check-in %s pukul %s di "%s"', v_guest.nama, v_guest.instansi, case when v_new_status = 'terlambat' then 'terlambat' else 'tepat waktu' end, to_char(v_now AT TIME ZONE 'Asia/Jakarta', 'HH24:MI'), v_event.nama_acara)
+    format('Tamu "%s" dari "%s" self check-in %s pukul %s di "%s"',
+      case
+        when v_guest.kategori_tamu = 'reguler'
+          and v_guest.nama_mahasiswa is not null
+          and v_guest.nama_mahasiswa <> ''
+          and v_guest.nama_mahasiswa <> '-'
+        then v_guest.nama_mahasiswa
+        else v_guest.nama
+      end,
+      v_guest.instansi,
+      case when v_new_status = 'terlambat' then 'terlambat' else 'tepat waktu' end,
+      to_char(v_now AT TIME ZONE 'Asia/Jakarta', 'HH24:MI'),
+      v_event.nama_acara)
   );
 
   return jsonb_build_object(

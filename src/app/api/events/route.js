@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { sanitize, requireRole, makeUniqueSlug } from "@/lib/api-helpers";
+import { sanitize, requireRole, makeUniqueSlug, getIdempotencyKey, mapRpcError } from "@/lib/api-helpers";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +20,8 @@ export async function POST(request) {
   const { supabase, user, response } = await requireRole(["admin"]);
   if (response) return response;
 
+  const idempotencyKey = getIdempotencyKey(request);
+
   try {
     const body = await request.json();
     if (!body.nama_acara || !body.lokasi || !body.tanggal_mulai || !body.jam_mulai) {
@@ -32,17 +34,7 @@ export async function POST(request) {
       .replace(/(^-|-$)/g, "");
     const slug = await makeUniqueSlug(supabase, baseSlug);
 
-    // Assign event to the active period (deterministic auto-fill, max 4 per
-    // period). Non-blocking: if the periodes bookkeeping fails (e.g. missing
-    // table/policy), the event is still created without a period.
-    let periode_id = null;
-    try {
-      periode_id = await resolvePeriodId(supabase);
-    } catch (err) {
-      console.error("[events] resolvePeriodId failed, continuing without periode:", err);
-    }
-
-    const record = {
+    const eventData = {
       nama_acara: sanitize(body.nama_acara),
       lokasi: sanitize(body.lokasi),
       tanggal_mulai: body.tanggal_mulai,
@@ -52,17 +44,18 @@ export async function POST(request) {
       grace_period_minutes: body.grace_period_minutes !== undefined ? Number(body.grace_period_minutes) : 30,
       status: body.status || "akan_datang",
       slug,
-      created_by: user.id,
-      ...(periode_id ? { periode_id } : {}),
     };
 
-    const { data, error } = await supabase
-      .from("events")
-      .insert([record])
-      .select()
-      .single();
+    const { data, error } = await supabase.rpc("idempotent_event", {
+      p_key: idempotencyKey,
+      p_user_id: user.id,
+      p_operation: "create",
+      p_data: eventData,
+    });
 
     if (error) {
+      const rpcResponse = mapRpcError(error);
+      if (rpcResponse) return rpcResponse;
       if (error.code === "23505") {
         const detail = `${error.message} ${error.details || ""}`.toLowerCase();
         if (detail.includes("single_active")) {
@@ -82,41 +75,4 @@ export async function POST(request) {
   } catch (err) {
     return NextResponse.json({ error: "Data tidak valid" }, { status: 400 });
   }
-}
-
-const MAX_EVENTS_PER_PERIODE = 4;
-
-/**
- * Determines the active period for a newly created event.
- * Joins the latest period while it has fewer than MAX_EVENTS_PER_PERIODE events;
- * otherwise (or if no period exists yet) creates and returns a new period.
- * Deterministic and free of date heuristics.
- */
-async function resolvePeriodId(supabase) {
-  const { data: latest, error: latestError } = await supabase
-    .from("periodes")
-    .select("id")
-    .order("created_at", { ascending: false })
-    .limit(1);
-
-  if (latestError) throw latestError;
-
-  if (latest && latest.length > 0) {
-    const { count, error: countError } = await supabase
-      .from("events")
-      .select("id", { count: "exact", head: true })
-      .eq("periode_id", latest[0].id);
-
-    if (countError) throw countError;
-    if (count < MAX_EVENTS_PER_PERIODE) return latest[0].id;
-  }
-
-  const { data: created, error: createError } = await supabase
-    .from("periodes")
-    .insert([{}])
-    .select("id")
-    .single();
-
-  if (createError) throw createError;
-  return created.id;
 }

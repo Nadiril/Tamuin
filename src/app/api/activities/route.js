@@ -43,6 +43,29 @@ export async function POST(request) {
       return NextResponse.json({ error: "Detail tidak valid" }, { status: 400 });
     }
 
+    // Defense-in-depth: time-based dedup for client-side logging
+    // Prevents duplicate activity entries if client sends same request twice
+    // within a 3-second window. This is NOT the primary idempotency mechanism —
+    // the idempotency key in RPC functions handles that.
+    const { data: recentDuplicate } = await supabase
+      .from("activities")
+      .select("id")
+      .eq("action", action)
+      .eq("user_id", user.id)
+      .eq("detail", detail.trim())
+      .gt("timestamp", new Date(Date.now() - 3000).toISOString())
+      .limit(1);
+
+    if (recentDuplicate && recentDuplicate.length > 0) {
+      // Return the existing activity instead of creating a duplicate
+      const { data: existing } = await supabase
+        .from("activities")
+        .select("*")
+        .eq("id", recentDuplicate[0].id)
+        .single();
+      return NextResponse.json(existing, { status: 200 });
+    }
+
     const { data, error } = await supabase
       .from("activities")
       .insert([{ action, detail: detail.trim(), user_id: user.id }])

@@ -40,6 +40,7 @@ export default function RootLayout({ children }) {
     <html
       lang="id"
       className={`${plusJakartaSans.variable} h-full antialiased dark`}
+      suppressHydrationWarning
     >
       <head>
         <link rel="preconnect" href={supabaseUrl} />

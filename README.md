@@ -10,8 +10,6 @@
 
 **Tamuin** (sebelumnya *Buku Tamu Digital*) adalah platform digital untuk mengelola tamu acara, registrasi, QR Check-in, monitoring kehadiran, dan laporan. Dibangun untuk **STIKOM PGRI Banyuwangi**, sistem ini mendukung registrasi tamu mandiri via QR Code, scan kehadiran oleh panitia, serta dashboard admin yang lengkap.
 
-📄 Riwayat perubahan versi ada di [**CHANGELOG.md**](./CHANGELOG.md).
-
 ---
 
 ## Fitur
@@ -27,6 +25,7 @@
 | **Kategori Tamu** | Kategorisasi Reguler / VIP / VVIP beserta data mahasiswa & alamat |
 | **Anti-Duplikat** | Cegah tamu ganda per acara (berdasarkan no HP / email) |
 | **Periode Acara** | Pengelompokan acara per periode untuk section "Acara Terbaru" |
+| **Pagination Tamu** | Daftar tamu di detail acara menggunakan pagination angka (10 item/halaman, mobile & desktop) |
 | **Dashboard Admin** | CRUD event, guest, user, dan laporan lengkap |
 | **Panel Panitia** | Scan QR, lihat history, dan daftar event |
 | **Audit Activity** | Semua aktivitas tercatat real-time |
@@ -253,6 +252,7 @@ Buka **Supabase Dashboard → SQL Editor**, lalu jalankan file SQL berikut **sec
 | 6 | `supabase/event_period_migration.sql` | Tabel `periodes` + kolom `events.periode_id` untuk pengelompokan "Acara Terbaru" di dashboard (auto-fill maks. 4 acara per periode) | Ya |
 | 7 | `supabase/event_period_backfill.sql` | Menempatkan acara lama (dibuat sebelum migrasi periode, `periode_id` masih `NULL`) ke periode aktif | Opsional |
 | 8 | `supabase/user_approval_migration.sql` | Kolom `status` di tabel `profiles` (default `active`; akun hasil registrasi mandiri berstatus `pending` sampai disetujui admin) | Ya |
+| 9 | `supabase/idempotency_migration.sql` | Tabel `idempotency_keys` + fungsi RPC idempotent (`idempotent_guest`, `idempotent_event`, `idempotent_guest_bulk_delete`, `idempotent_guest_import`, `idempotent_guest_reset`) untuk mencegah request duplikat & log aktivitas | Ya |
 
 **Cara menjalankan:**
 1. Copy isi file `.sql`
@@ -266,7 +266,7 @@ Buka **Supabase Dashboard → SQL Editor**, lalu jalankan file SQL berikut **sec
 
 Buat user via **Supabase Dashboard → Authentication → Add User**, lalu di SQL Editor:
 
-```sql
+```sql contoh
 INSERT INTO public.profiles (id, username, role, display_name)
 VALUES ('USER_UUID', 'admin@example.com', 'admin', 'Admin Utama');
 ```

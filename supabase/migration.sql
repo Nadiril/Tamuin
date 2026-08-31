@@ -57,6 +57,7 @@ create unique index if not exists idx_events_single_active
 -- no trigger keeping it honest — it would drift the first time a guest row
 -- was inserted or deleted directly. Rather than carry a counter that lies,
 -- expose the true count as a view. Cheap at this scale, always correct.
+drop view if exists public.events_with_guest_count;
 create or replace view public.events_with_guest_count as
 select
   e.*,
@@ -396,7 +397,16 @@ begin
     insert into public.activities (action, detail, user_id)
     values (
       'scan_rejected_event_ended',
-      format('Tamu "%s" dari "%s" mencoba check-in setelah acara "%s" berakhir', v_guest.nama, v_guest.instansi, v_event.nama_acara),
+      format('Tamu "%s" dari "%s" mencoba check-in setelah acara "%s" berakhir',
+        case
+          when v_guest.kategori_tamu = 'reguler'
+            and v_guest.nama_mahasiswa is not null
+            and v_guest.nama_mahasiswa <> ''
+            and v_guest.nama_mahasiswa <> '-'
+          then v_guest.nama_mahasiswa
+          else v_guest.nama
+        end,
+        v_guest.instansi, v_event.nama_acara),
       p_caller_id
     );
     return jsonb_build_object(
@@ -436,7 +446,19 @@ begin
   insert into public.activities (action, detail, user_id)
   values (
     'guest_scanned',
-    format('Tamu "%s" dari "%s" check-in %s pukul %s di "%s"', v_guest.nama, v_guest.instansi, case when v_new_status = 'terlambat' then 'terlambat' else 'tepat waktu' end, to_char(v_now AT TIME ZONE 'Asia/Jakarta', 'HH24:MI'), v_event.nama_acara),
+    format('Tamu "%s" dari "%s" check-in %s pukul %s di "%s"',
+      case
+        when v_guest.kategori_tamu = 'reguler'
+          and v_guest.nama_mahasiswa is not null
+          and v_guest.nama_mahasiswa <> ''
+          and v_guest.nama_mahasiswa <> '-'
+        then v_guest.nama_mahasiswa
+        else v_guest.nama
+      end,
+      v_guest.instansi,
+      case when v_new_status = 'terlambat' then 'terlambat' else 'tepat waktu' end,
+      to_char(v_now AT TIME ZONE 'Asia/Jakarta', 'HH24:MI'),
+      v_event.nama_acara),
     p_caller_id
   );
 

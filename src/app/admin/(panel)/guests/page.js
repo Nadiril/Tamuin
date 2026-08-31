@@ -9,7 +9,6 @@ import Input from "@/components/Input";
 import Toast from "@/components/Toast";
 import { useGuestsQuery, useGuestMutations, guestsKey } from "@/lib/queries/useGuestsQuery";
 import { useEventsQuery } from "@/lib/queries/useEventsQuery";
-import { useLogActivity } from "@/lib/queries/useActivitiesQuery";
 import { Download } from "lucide-react";
 
 export default function GuestsPage() {
@@ -17,8 +16,7 @@ export default function GuestsPage() {
   const [eventFilter, setEventFilter] = useState("");
   const { data: guests = [], isLoading } = useGuestsQuery(eventFilter ? { acara_id: eventFilter } : {});
   const { data: events = [] } = useEventsQuery();
-  const { addGuest, updateGuest, deleteGuest } = useGuestMutations();
-  const { mutateAsync: logActivity } = useLogActivity();
+  const { addGuest, updateGuest, deleteGuest, addMutation, updateMutation, deleteMutation } = useGuestMutations();
   const fetchGuests = useCallback(() => queryClient.invalidateQueries({ queryKey: ['guests'] }), [queryClient]);
   const [showModal, setShowModal] = useState(false);
   const [editingGuest, setEditingGuest] = useState(null);
@@ -82,8 +80,7 @@ export default function GuestsPage() {
         alamat: newGuest.alamat,
         kategori_tamu: newGuest.kategori_tamu,
         acara_id: acaraId,
-      });
-      await logActivity({ action: "update_guest", detail: `Mengedit tamu "${newGuest.nama}"` });
+      }, crypto.randomUUID());
       setShowModal(false);
       setEditingGuest(null);
       setNewGuest({ nama: "", instansi: "", no_hp: "", nama_mahasiswa: "", alamat: "", kategori_tamu: "reguler", acara_id: "" });
@@ -98,10 +95,8 @@ export default function GuestsPage() {
   };
 
   const confirmDelete = async () => {
-    const deleted = guests.find((g) => g.id === confirmDeleteId);
     try {
-      await deleteGuest(confirmDeleteId);
-      if (deleted) await logActivity({ action: "delete_guest", detail: `Menghapus tamu "${deleted.nama}"` });
+      await deleteGuest(confirmDeleteId, crypto.randomUUID());
       setConfirmDeleteId(null);
       showToast("Tamu berhasil dihapus!");
     } catch {
@@ -114,15 +109,15 @@ export default function GuestsPage() {
     setDeletingAll(true);
     try {
       const query = eventFilter ? `?acara_id=${encodeURIComponent(eventFilter)}` : "";
-      const res = await fetch(`/api/guests/bulk-delete${query}`, { method: "DELETE" });
+      const idempotencyKey = crypto.randomUUID();
+      const res = await fetch(`/api/guests/bulk-delete${query}`, {
+        method: "DELETE",
+        headers: { "X-Idempotency-Key": idempotencyKey },
+      });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         throw new Error(data.error || "Gagal menghapus data tamu");
       }
-      await logActivity({
-        action: "delete_guest",
-        detail: `Menghapus tamu${eventFilter ? ` di acara ${events.find((e) => e.id === parseInt(eventFilter))?.nama_acara || eventFilter}` : " (semua acara)"}`,
-      });
       setConfirmDeleteAll(false);
       setConfirmDeleteId(null);
       await fetchGuests();
@@ -138,15 +133,15 @@ export default function GuestsPage() {
     if (!resetGuest) return;
     setResetting(true);
     try {
-      const res = await fetch(`/api/guests/${resetGuest.id}/reset-attendance`, { method: "POST" });
+      const idempotencyKey = crypto.randomUUID();
+      const res = await fetch(`/api/guests/${resetGuest.id}/reset-attendance`, {
+        method: "POST",
+        headers: { "X-Idempotency-Key": idempotencyKey },
+      });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         throw new Error(data.error || "Gagal mengoreksi status kehadiran");
       }
-      await logActivity({
-        action: "update_guest",
-        detail: `Koreksi status kehadiran tamu "${resetGuest.nama}" menjadi tidak hadir`,
-      });
       setResetGuest(null);
       await fetchGuests();
       showToast(`Status kehadiran "${resetGuest.nama}" direset menjadi Tidak Hadir`);
@@ -176,8 +171,7 @@ export default function GuestsPage() {
       acara_id: acaraId,
     };
     try {
-      await addGuest(guest);
-      await logActivity({ action: "create_guest", detail: `Menambah tamu "${guest.nama}"` });
+      await addGuest(guest, crypto.randomUUID());
       setShowModal(false);
       setNewGuest({ nama: "", instansi: "", no_hp: "", nama_mahasiswa: "", alamat: "", kategori_tamu: "reguler", acara_id: "" });
       showToast("Tamu berhasil ditambahkan!");
@@ -332,9 +326,13 @@ export default function GuestsPage() {
         return;
       }
 
+      const idempotencyKey = crypto.randomUUID();
       const res = await fetch("/api/guests/import", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-Idempotency-Key": idempotencyKey,
+        },
         body: JSON.stringify({ guests: payload }),
       });
       const data = await res.json().catch(() => ({}));
@@ -344,7 +342,6 @@ export default function GuestsPage() {
       }
 
       await fetchGuests();
-      logActivity({ action: "import_guest", detail: `Mengimpor ${data.count} tamu dari CSV${data.skipped ? ` (${data.skipped} duplikat dilewati)` : ""}` });
       setShowImportModal(false);
       setImportFile(null);
       setImportPreview([]);
@@ -737,7 +734,7 @@ export default function GuestsPage() {
               )}
               <div className="flex gap-3 pt-4 shrink-0">
                 <Button type="button" variant="secondary" className="flex-1" onClick={() => { setShowModal(false); setEditingGuest(null); setNewGuest({ nama: "", instansi: "", no_hp: "", nama_mahasiswa: "", alamat: "", kategori_tamu: "reguler", acara_id: "" }); }}>Batal</Button>
-                <Button type="submit" className="flex-1">{editingGuest ? "Simpan Perubahan" : "Simpan Tamu"}</Button>
+                <Button type="submit" className="flex-1" disabled={addMutation.isPending || updateMutation.isPending}>{editingGuest ? "Simpan Perubahan" : "Simpan Tamu"}</Button>
               </div>
             </form>
           </div>
@@ -813,7 +810,7 @@ export default function GuestsPage() {
             <p className="text-sm text-muted mb-6">Data tamu yang dihapus tidak dapat dikembalikan.</p>
             <div className="flex gap-3">
               <Button type="button" variant="secondary" className="flex-1" onClick={() => setConfirmDeleteId(null)}>Batal</Button>
-              <Button type="button" variant="danger" className="flex-1" onClick={confirmDelete}>Hapus</Button>
+              <Button type="button" variant="danger" className="flex-1" onClick={confirmDelete} disabled={deleteMutation.isPending}>Hapus</Button>
             </div>
           </div>
         </div>

@@ -69,7 +69,7 @@ export default function EventDetailPage() {
 
         <div>
           <h3 className="text-base font-bold text-foreground mb-4">Daftar Tamu</h3>
-          <GuestTable guests={eventGuests} />
+          <GuestTable guests={eventGuests} paginate />
         </div>
       </div>
     </>

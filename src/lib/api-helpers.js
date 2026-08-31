@@ -136,3 +136,42 @@ export async function makeUniqueSlug(supabase, baseSlug, { excludeId = null } = 
     suffix += 1;
   }
 }
+
+// ---------------------------------------------------------------------
+// Idempotency helpers
+// ---------------------------------------------------------------------
+
+/**
+ * Extract the idempotency key from the request header.
+ * Returns null if no key is present (allows non-idempotent fallback).
+ */
+export function getIdempotencyKey(request) {
+  return request.headers.get("x-idempotency-key") || null;
+}
+
+/**
+ * Common error mapping from RPC exceptions to HTTP responses.
+ * Returns a NextResponse if the error is known, null otherwise.
+ */
+export function mapRpcError(error) {
+  const msg = error?.message || "";
+  if (msg.includes("REQUEST_IN_PROGRESS")) {
+    return NextResponse.json(
+      { error: "Request sedang diproses. Jika operasi ini penting, silakan periksa data terlebih dahulu." },
+      { status: 409 },
+    );
+  }
+  if (msg.includes("GUEST_NOT_FOUND")) {
+    return NextResponse.json({ error: "Tamu tidak ditemukan" }, { status: 404 });
+  }
+  if (msg.includes("ALREADY_NOT_PRESENT")) {
+    return NextResponse.json({ error: "Tamu sudah berstatus tidak hadir" }, { status: 400 });
+  }
+  if (msg.includes("23505")) {
+    return NextResponse.json(
+      { error: "Data duplikat ditemukan" },
+      { status: 409 },
+    );
+  }
+  return null;
+}

@@ -17,24 +17,32 @@ class RealtimeManager {
     this.callbacks.get(key).add(callback);
 
     if (!this.channels.has(key)) {
+      if (typeof WebSocket === 'undefined') return () => {};
+
       const channelConfig = { event: '*', schema: 'public', table };
       if (filter) Object.assign(channelConfig, filter);
 
-      const channel = supabase
-        .channel(key)
-        .on('postgres_changes', channelConfig, (payload) => {
-          const cbs = this.callbacks.get(key);
-          if (cbs) cbs.forEach((cb) => cb(payload));
-        })
-        .subscribe((status, err) => {
-          if (status === 'CHANNEL_ERROR' || status === 'SUBSCRIPTION_ERROR') {
-            if (err?.message?.includes('transport failure')) return;
-            console.warn(`[Realtime] ${key}: ${status}`, err?.message || err);
-          }
-          if (status === 'TIMED_OUT') {
-            console.info(`[Realtime] ${key} timed out, retrying...`);
-          }
-        });
+      let channel;
+      try {
+        channel = supabase
+          .channel(key)
+          .on('postgres_changes', channelConfig, (payload) => {
+            const cbs = this.callbacks.get(key);
+            if (cbs) cbs.forEach((cb) => cb(payload));
+          })
+          .subscribe((status, err) => {
+            if (status === 'CHANNEL_ERROR' || status === 'SUBSCRIPTION_ERROR') {
+              if (err?.message?.includes('transport failure')) return;
+              console.warn(`[Realtime] ${key}: ${status}`, err?.message || err);
+            }
+            if (status === 'TIMED_OUT') {
+              console.info(`[Realtime] ${key} timed out, retrying...`);
+            }
+          });
+      } catch (e) {
+        if (e?.message?.includes('WebSocket')) return () => {};
+        throw e;
+      }
 
       this.channels.set(key, channel);
     }

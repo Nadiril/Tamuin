@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
-import { sanitize, requireRole, findDuplicateGuest } from "@/lib/api-helpers";
+import { sanitize, requireRole, findDuplicateGuest, getIdempotencyKey, mapRpcError } from "@/lib/api-helpers";
 
 export async function PUT(request, { params }) {
   const { id } = await params;
-  const { supabase, response } = await requireRole(["admin"]);
+  const { supabase, user, response } = await requireRole(["admin"]);
   if (response) return response;
+
+  const idempotencyKey = getIdempotencyKey(request);
 
   try {
     const body = await request.json();
@@ -16,8 +18,6 @@ export async function PUT(request, { params }) {
       "nama_mahasiswa",
       "alamat",
       "kategori_tamu",
-      "status_kehadiran",
-      "waktu_kedatangan",
       "acara_id",
     ];
     const updates = {};
@@ -59,14 +59,18 @@ export async function PUT(request, { params }) {
       }
     }
 
-    const { data, error } = await supabase
-      .from("guests")
-      .update(updates)
-      .eq("id", id)
-      .select()
-      .single();
+    const rpcData = { id: Number(id), ...updates };
+
+    const { data, error } = await supabase.rpc("idempotent_guest", {
+      p_key: idempotencyKey,
+      p_user_id: user.id,
+      p_operation: "update",
+      p_data: rpcData,
+    });
 
     if (error) {
+      const rpcResponse = mapRpcError(error);
+      if (rpcResponse) return rpcResponse;
       if (error.code === "23505") {
         return NextResponse.json(
           { error: "Tamu dengan nomor HP yang sama sudah terdaftar di acara ini" },
@@ -75,6 +79,7 @@ export async function PUT(request, { params }) {
       }
       return NextResponse.json({ error: "Gagal memperbarui data tamu" }, { status: 500 });
     }
+
     return NextResponse.json(data);
   } catch (err) {
     return NextResponse.json({ error: "Data tidak valid" }, { status: 400 });
@@ -83,10 +88,23 @@ export async function PUT(request, { params }) {
 
 export async function DELETE(request, { params }) {
   const { id } = await params;
-  const { supabase, response } = await requireRole(["admin"]);
+  const { supabase, user, response } = await requireRole(["admin"]);
   if (response) return response;
 
-  const { error } = await supabase.from("guests").delete().eq("id", id);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ success: true });
+  const idempotencyKey = getIdempotencyKey(request);
+
+  const { data, error } = await supabase.rpc("idempotent_guest", {
+    p_key: idempotencyKey,
+    p_user_id: user.id,
+    p_operation: "delete",
+    p_data: { id: Number(id) },
+  });
+
+  if (error) {
+    const rpcResponse = mapRpcError(error);
+    if (rpcResponse) return rpcResponse;
+    return NextResponse.json({ error: error.message || "Gagal menghapus tamu" }, { status: 500 });
+  }
+
+  return NextResponse.json(data);
 }

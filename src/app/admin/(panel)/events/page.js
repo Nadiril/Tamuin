@@ -7,7 +7,6 @@ import Button from "@/components/Button";
 import Input from "@/components/Input";
 import Toast from "@/components/Toast";
 import { useEventsQuery, useEventMutations } from "@/lib/queries/useEventsQuery";
-import { useLogActivity } from "@/lib/queries/useActivitiesQuery";
 
 const defaultForm = {
   nama_acara: "",
@@ -28,8 +27,7 @@ function toHHmm(value) {
 
 export default function EventsPage() {
   const { data: events = [] } = useEventsQuery();
-  const { addEvent, updateEvent, deleteEvent } = useEventMutations();
-  const { mutateAsync: logActivity } = useLogActivity();
+  const { addEvent, updateEvent, deleteEvent, addMutation, updateMutation, deleteMutation } = useEventMutations();
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
@@ -68,8 +66,7 @@ export default function EventsPage() {
       status: "akan_datang",
     };
     try {
-      await addEvent(event);
-      await logActivity({ action: "create_event", detail: `Membuat acara "${event.nama_acara}"` });
+      await addEvent(event, crypto.randomUUID());
       resetForm();
       showToast("Acara berhasil dibuat!");
     } catch (err) {
@@ -106,8 +103,7 @@ export default function EventsPage() {
         jam_mulai: newEvent.jam_mulai,
         jam_selesai: newEvent.jam_selesai || "17:00",
         grace_period_minutes: parseInt(newEvent.grace_period_minutes) || 30,
-      });
-      await logActivity({ action: "update_event", detail: `Mengedit acara "${newEvent.nama_acara}"` });
+      }, crypto.randomUUID());
       resetForm();
       showToast("Acara berhasil diperbarui!");
     } catch (err) {
@@ -120,10 +116,8 @@ export default function EventsPage() {
   };
 
   const confirmDelete = async () => {
-    const deleted = events.find((e) => e.id === confirmDeleteId);
     try {
-      await deleteEvent(confirmDeleteId);
-      if (deleted) await logActivity({ action: "delete_event", detail: `Menghapus acara "${deleted.nama_acara}"` });
+      await deleteEvent(confirmDeleteId, crypto.randomUUID());
       setConfirmDeleteId(null);
       showToast("Acara berhasil dihapus!");
     } catch {
@@ -153,12 +147,11 @@ export default function EventsPage() {
     }
 
     try {
-      const result = await updateEvent(event.id, { status: newStatus });
+      const result = await updateEvent(event.id, { status: newStatus }, crypto.randomUUID());
       if (!result) {
         showToast("Gagal mengubah status acara. Silakan coba lagi.", "error");
         return;
       }
-      await logActivity({ action: "update_status", detail: `Mengubah status "${event.nama_acara}" menjadi "${statusLabels[newStatus]}"` });
       showToast("Status acara berhasil diperbarui!");
     } catch {
       showToast("Gagal mengubah status acara. Silakan coba lagi.", "error");
@@ -217,7 +210,7 @@ export default function EventsPage() {
               <Input id="event-grace" label="Batas Toleransi (menit)" type="number" placeholder="30" value={newEvent.grace_period_minutes} onChange={(e) => setNewEvent({ ...newEvent, grace_period_minutes: e.target.value })} />
               <div className="flex gap-3 pt-4 shrink-0">
                 <Button type="button" variant="secondary" className="flex-1" onClick={resetForm}>Batal</Button>
-                <Button type="submit" className="flex-1">{editingEvent ? "Simpan Perubahan" : "Simpan Acara"}</Button>
+                <Button type="submit" className="flex-1" disabled={addMutation.isPending || updateMutation.isPending}>{editingEvent ? "Simpan Perubahan" : "Simpan Acara"}</Button>
               </div>
             </form>
           </div>
@@ -238,7 +231,7 @@ export default function EventsPage() {
             <p className="text-sm text-muted mb-6">Acara yang dihapus tidak dapat dikembalikan.</p>
             <div className="flex gap-3">
               <Button type="button" variant="secondary" className="flex-1" onClick={() => setConfirmDeleteId(null)}>Batal</Button>
-              <Button type="button" variant="danger" className="flex-1" onClick={confirmDelete}>Hapus</Button>
+              <Button type="button" variant="danger" className="flex-1" onClick={confirmDelete} disabled={deleteMutation.isPending}>Hapus</Button>
             </div>
           </div>
         </div>

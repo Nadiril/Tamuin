@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { createPortal } from "react-dom";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import Input from "./Input";
 import Button from "./Button";
 import { QRCodeCanvas } from "qrcode.react";
@@ -19,7 +20,7 @@ const statusKehadiranMap = {
   tidak_hadir: { badge: "bg-danger-muted text-danger border border-danger/20", label: "Tidak Hadir" },
 };
 
-export default function GuestTable({ guests, showEvent = false, events = [], onEdit, onDelete, onDeleteAll, onResetAttendance }) {
+export default function GuestTable({ guests, showEvent = false, events = [], onEdit, onDelete, onDeleteAll, onResetAttendance, paginate = false }) {
   const [search, setSearch] = useState("");
   const [kategoriFilter, setKategoriFilter] = useState("");
   const [qrGuest, setQrGuest] = useState(null);
@@ -93,6 +94,23 @@ export default function GuestTable({ guests, showEvent = false, events = [], onE
     const matchKategori = !kategoriFilter || g.kategori_tamu === kategoriFilter;
     return matchSearch && matchKategori;
   });
+
+  const [page, setPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
+  const totalPages = paginate ? Math.ceil(filtered.length / ITEMS_PER_PAGE) : 1;
+  const paginated = paginate
+    ? filtered.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE)
+    : filtered;
+
+  const handleSearchChange = (e) => {
+    setSearch(e.target.value);
+    setPage(1);
+  };
+
+  const handleKategoriChange = (e) => {
+    setKategoriFilter(e.target.value);
+    setPage(1);
+  };
 
   const formatTime = (dateStr) => formatTimeWIB(dateStr);
 
@@ -171,7 +189,7 @@ export default function GuestTable({ guests, showEvent = false, events = [], onE
             <Input
               placeholder="Cari nama, instansi, atau no. HP..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={handleSearchChange}
               icon={
                 <svg
                   className="w-4 h-4"
@@ -191,7 +209,7 @@ export default function GuestTable({ guests, showEvent = false, events = [], onE
           </div>
           <select
             value={kategoriFilter}
-            onChange={(e) => setKategoriFilter(e.target.value)}
+            onChange={handleKategoriChange}
             className="w-full sm:w-44 h-10 rounded-[10px] bg-surface border border-input-border px-4 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-input-focus transition-all duration-200"
           >
             <option value="">Semua Kategori</option>
@@ -246,7 +264,7 @@ export default function GuestTable({ guests, showEvent = false, events = [], onE
             </div>
           </div>
         ) : (
-          filtered.map((guest) => (
+          paginated.map((guest) => (
             <div key={guest.id} className="glass-card rounded-2xl p-4 flex flex-col gap-3 relative border border-border/50">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
@@ -419,7 +437,7 @@ export default function GuestTable({ guests, showEvent = false, events = [], onE
                   </td>
                 </tr>
               ) : (
-                filtered.map((guest) => (
+                paginated.map((guest) => (
                   <tr
                     key={guest.id}
                     className="border-b border-border/50 table-row-hover"
@@ -529,6 +547,49 @@ export default function GuestTable({ guests, showEvent = false, events = [], onE
           </div>
         </div>
       </div>
+
+      {/* Pagination */}
+      {paginate && totalPages > 1 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 px-1">
+          <p className="text-sm text-muted whitespace-nowrap">
+            Halaman <span className="text-foreground font-medium">{page}</span> dari {totalPages}
+          </p>
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="p-2 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-card-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+              const start = Math.max(1, Math.min(page - 2, totalPages - 4));
+              const p = start + i;
+              if (p > totalPages) return null;
+              return (
+                <button
+                  key={p}
+                  onClick={() => setPage(p)}
+                  className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
+                    p === page
+                      ? "bg-accent text-white"
+                      : "text-muted-foreground hover:text-foreground hover:bg-card-hover"
+                  }`}
+                >
+                  {p}
+                </button>
+              );
+            })}
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              className="p-2 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-card-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Actions Dropdown Menu */}
       {openMenuId && createPortal(

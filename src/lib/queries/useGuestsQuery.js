@@ -71,10 +71,12 @@ export function useGuestMutations() {
   const queryClient = useQueryClient();
 
   const addMutation = useMutation({
-    mutationFn: async (guest) => {
+    mutationFn: async ({ guest, idempotencyKey }) => {
+      const headers = { 'Content-Type': 'application/json' };
+      if (idempotencyKey) headers['X-Idempotency-Key'] = idempotencyKey;
       const res = await fetch('/api/guests', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(guest),
       });
       if (!res.ok) throw new Error(await readError(res, 'Gagal menambah tamu'));
@@ -86,10 +88,12 @@ export function useGuestMutations() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, ...updates }) => {
+    mutationFn: async ({ id, idempotencyKey, ...updates }) => {
+      const headers = { 'Content-Type': 'application/json' };
+      if (idempotencyKey) headers['X-Idempotency-Key'] = idempotencyKey;
       const res = await fetch(`/api/guests/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(updates),
       });
       if (!res.ok) throw new Error(await readError(res, 'Gagal mengupdate tamu'));
@@ -104,12 +108,14 @@ export function useGuestMutations() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id) => {
-      const res = await fetch(`/api/guests/${id}`, { method: 'DELETE' });
+    mutationFn: async ({ id, idempotencyKey }) => {
+      const headers = {};
+      if (idempotencyKey) headers['X-Idempotency-Key'] = idempotencyKey;
+      const res = await fetch(`/api/guests/${id}`, { method: 'DELETE', headers });
       if (!res.ok) throw new Error('Gagal menghapus tamu');
       return true;
     },
-    onSuccess: (_data, id) => {
+    onSuccess: (_data, { id }) => {
       queryClient.setQueryData(guestsKey(), (old) => {
         if (!old) return old;
         return old.filter((g) => g.id !== id);
@@ -117,20 +123,27 @@ export function useGuestMutations() {
     },
   });
 
-  const addGuest = async (guest) => {
-    const data = await addMutation.mutateAsync(guest);
+  const addGuest = async (guest, idempotencyKey) => {
+    const data = await addMutation.mutateAsync({ guest, idempotencyKey });
     return data;
   };
 
-  const updateGuest = async (id, updates) => {
-    const data = await updateMutation.mutateAsync({ id, ...updates });
+  const updateGuest = async (id, updates, idempotencyKey) => {
+    const data = await updateMutation.mutateAsync({ id, idempotencyKey, ...updates });
     return data;
   };
 
-  const deleteGuest = async (id) => {
-    await deleteMutation.mutateAsync(id);
+  const deleteGuest = async (id, idempotencyKey) => {
+    await deleteMutation.mutateAsync({ id, idempotencyKey });
     return true;
   };
 
-  return { addGuest, updateGuest, deleteGuest, addMutation, updateMutation, deleteMutation };
+  return {
+    addGuest,
+    updateGuest,
+    deleteGuest,
+    addMutation,
+    updateMutation,
+    deleteMutation,
+  };
 }

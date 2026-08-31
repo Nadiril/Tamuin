@@ -5,7 +5,6 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense, useMemo } from "react";
 import { useEventsQuery } from "@/lib/queries/useEventsQuery";
 import { useGuestsQuery, useGuestMutations } from "@/lib/queries/useGuestsQuery";
-import { useLogActivity } from "@/lib/queries/useActivitiesQuery";
 import {
   User,
   Building2,
@@ -32,8 +31,7 @@ function RegisterContent() {
   const selectedEventId = searchParams.get("eventId");
   const { data: events = [] } = useEventsQuery();
   const { data: guests = [] } = useGuestsQuery();
-  const { addGuest } = useGuestMutations();
-  const { mutateAsync: logActivity } = useLogActivity();
+  const { addGuest, addMutation } = useGuestMutations();
 
   const [eventId, setEventId] = useState(selectedEventId || "");
   const [form, setForm] = useState({
@@ -85,9 +83,8 @@ function RegisterContent() {
         nama_mahasiswa: isVip ? "-" : form.nama_mahasiswa.trim(),
         alamat: form.alamat.trim(),
         kategori_tamu: form.kategori_tamu,
-      });
+      }, crypto.randomUUID());
       if (result) {
-        logActivity({ action: "create_guest", detail: `Registrasi tamu "${form.nama.trim()}" di "${selectedEvent?.nama_acara}"` });
         setToast({ id: Date.now(), message: "Tamu berhasil diregistrasi!", type: "success" });
         setForm({ nama: "", instansi: "", no_hp: "", nama_mahasiswa: "", alamat: "", kategori_tamu: "reguler" });
       } else {
@@ -263,7 +260,7 @@ function RegisterContent() {
               <div className="pt-2">
                 <button
                   type="submit"
-                  disabled={submitting || !eventId}
+                  disabled={submitting || addMutation.isPending || !eventId}
                   className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-accent text-white text-sm font-medium hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-lg shadow-accent/20 cursor-pointer"
                 >
                   {submitting ? (

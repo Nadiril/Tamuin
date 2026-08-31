@@ -52,10 +52,12 @@ export function useEventMutations() {
   const queryClient = useQueryClient();
 
   const addMutation = useMutation({
-    mutationFn: async (event) => {
+    mutationFn: async ({ event, idempotencyKey }) => {
+      const headers = { 'Content-Type': 'application/json' };
+      if (idempotencyKey) headers['X-Idempotency-Key'] = idempotencyKey;
       const res = await fetch('/api/events', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(event),
       });
       const data = await res.json().catch(() => null);
@@ -68,10 +70,12 @@ export function useEventMutations() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, ...updates }) => {
+    mutationFn: async ({ id, idempotencyKey, ...updates }) => {
+      const headers = { 'Content-Type': 'application/json' };
+      if (idempotencyKey) headers['X-Idempotency-Key'] = idempotencyKey;
       const res = await fetch(`/api/events/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(updates),
       });
       const data = await res.json().catch(() => null);
@@ -87,12 +91,14 @@ export function useEventMutations() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id) => {
-      const res = await fetch(`/api/events/${id}`, { method: 'DELETE' });
+    mutationFn: async ({ id, idempotencyKey }) => {
+      const headers = {};
+      if (idempotencyKey) headers['X-Idempotency-Key'] = idempotencyKey;
+      const res = await fetch(`/api/events/${id}`, { method: 'DELETE', headers });
       if (!res.ok) throw new Error('Gagal menghapus acara');
       return true;
     },
-    onSuccess: (_data, id) => {
+    onSuccess: (_data, { id }) => {
       queryClient.setQueryData(eventsKey(), (old) => {
         if (!old) return old;
         return old.filter((e) => e.id !== id);
@@ -100,18 +106,25 @@ export function useEventMutations() {
     },
   });
 
-  const addEvent = async (event) => {
-    return await addMutation.mutateAsync(event);
+  const addEvent = async (event, idempotencyKey) => {
+    return await addMutation.mutateAsync({ event, idempotencyKey });
   };
 
-  const updateEvent = async (id, updates) => {
-    return await updateMutation.mutateAsync({ id, ...updates });
+  const updateEvent = async (id, updates, idempotencyKey) => {
+    return await updateMutation.mutateAsync({ id, idempotencyKey, ...updates });
   };
 
-  const deleteEvent = async (id) => {
-    await deleteMutation.mutateAsync(id);
+  const deleteEvent = async (id, idempotencyKey) => {
+    await deleteMutation.mutateAsync({ id, idempotencyKey });
     return true;
   };
 
-  return { addEvent, updateEvent, deleteEvent, addMutation, updateMutation, deleteMutation };
+  return {
+    addEvent,
+    updateEvent,
+    deleteEvent,
+    addMutation,
+    updateMutation,
+    deleteMutation,
+  };
 }

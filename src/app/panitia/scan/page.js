@@ -7,7 +7,6 @@ import { Scanner, useDevices } from "@yudiel/react-qr-scanner";
 import "@/lib/zxing";
 import { useGuestsQuery, useGuestMutations, guestsKey } from "@/lib/queries/useGuestsQuery";
 import { useEventsQuery } from "@/lib/queries/useEventsQuery";
-import { useLogActivity } from "@/lib/queries/useActivitiesQuery";
 import { formatTime as formatTimeWIB } from "@/lib/format-time";
 import {
   QrCode,
@@ -70,7 +69,6 @@ function ScanContent() {
   const { data: events = [] } = useEventsQuery();
   const selectedEvent = events.find((e) => e.id === parseInt(eventId));
   const { data: guests = [], isLoading: guestsLoaded } = useGuestsQuery();
-  const { mutateAsync: logActivity } = useLogActivity();
 
   const [scanning, setScanning] = useState(true);
   const [scannedGuest, setScannedGuest] = useState(null);
@@ -122,8 +120,6 @@ function ScanContent() {
         setScannedGuest((prev) => ({ ...prev, status_kehadiran: data.status }));
         setSubmitted(true);
         const scanTime = formatTimeWIB(data.guest?.waktu_kedatangan || new Date().toISOString());
-        const scanStatus = data.status === "terlambat" ? "terlambat" : "tepat waktu";
-        logActivity({ action: "scan_guest", detail: `Tamu "${scannedGuest.nama}" dari "${scannedGuest.instansi}" check-in ${scanStatus} pukul ${scanTime} di "${selectedEvent?.nama_acara}"` });
         showToast(
           data.status === "hadir" ? "Kehadiran tepat waktu!" : "Tamu tercatat terlambat."
         );

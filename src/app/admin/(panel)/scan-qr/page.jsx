@@ -8,7 +8,6 @@ import Button from "@/components/Button";
 import Toast from "@/components/Toast";
 import { useGuestsQuery } from "@/lib/queries/useGuestsQuery";
 import { useEventsQuery } from "@/lib/queries/useEventsQuery";
-import { useLogActivity } from "@/lib/queries/useActivitiesQuery";
 import { formatTime as formatTimeWIB } from "@/lib/format-time";
 import { UserRound, Clock, CheckCircle, Building2, Phone, Calendar, User, Send, ArrowLeft, QrCode, MapPin } from "lucide-react";
 
@@ -19,7 +18,6 @@ function ScanQRContent() {
   const { data: allEvents = [] } = useEventsQuery();
   const selectedEvent = allEvents.find((e) => e.id === parseInt(eventId));
   const { data: guests = [] } = useGuestsQuery();
-  const { mutateAsync: logActivity } = useLogActivity();
 
   const [scannedGuest, setScannedGuest] = useState(null);
   const [submitting, setSubmitting] = useState(false);
@@ -58,8 +56,6 @@ function ScanQRContent() {
           { id: Date.now(), nama: scannedGuest.nama, instansi: scannedGuest.instansi, no_hp: scannedGuest.no_hp, kategori_tamu: scannedGuest.kategori_tamu, event: selectedEvent?.nama_acara || allEvents.find((e) => e.id === scannedGuest.acara_id)?.nama_acara, status: data.status, time: scanTime },
           ...prev,
         ]);
-        const scanStatus = data.status === "terlambat" ? "terlambat" : "tepat waktu";
-        logActivity({ action: "scan_guest", detail: `Tamu "${scannedGuest.nama}" dari "${scannedGuest.instansi}" check-in ${scanStatus} pukul ${scanTime}` + (selectedEvent ? ` di "${selectedEvent.nama_acara}"` : "") });
         showToast(
           data.status === "hadir" ? "Kehadiran tepat waktu!" :
             data.status === "terlambat" ? "Tamu tercatat terlambat." :

@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 import { generateToken } from "@/lib/token";
-import { sanitize, requireRole, findDuplicateGuest, insertGuests } from "@/lib/api-helpers";
+import {
+  sanitize,
+  requireRole,
+  findDuplicateGuest,
+  getIdempotencyKey,
+  mapRpcError,
+} from "@/lib/api-helpers";
 
 export async function GET(request) {
   const { supabase, response } = await requireRole(["admin", "panitia"]);
@@ -18,8 +24,10 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
-  const { supabase, response } = await requireRole(["admin", "panitia"]);
+  const { supabase, user, response } = await requireRole(["admin", "panitia"]);
   if (response) return response;
+
+  const idempotencyKey = getIdempotencyKey(request);
 
   try {
     const body = await request.json();
@@ -48,26 +56,30 @@ export async function POST(request) {
     }
 
     const isVip = kategori_tamu !== "reguler";
-    const nama_mahasiswa = isVip
-      ? "-"
-      : sanitize(body.nama_mahasiswa) || nama;
+    const nama_mahasiswa = isVip ? "-" : sanitize(body.nama_mahasiswa) || nama;
 
-    const guest = {
+    const guestData = {
       nama,
       instansi: instansi || null,
-      no_hp,
+      no_hp: no_hp || null,
       tujuan: body.tujuan ? sanitize(body.tujuan) : null,
       nama_mahasiswa,
       alamat,
       kategori_tamu,
-      status_kehadiran: "tidak_hadir",
       acara_id,
       qr_token: generateToken(),
     };
 
-    const { data, error } = await insertGuests(supabase, [guest], { select: "*", single: true });
+    const { data, error } = await supabase.rpc("idempotent_guest", {
+      p_key: idempotencyKey,
+      p_user_id: user.id,
+      p_operation: "create",
+      p_data: guestData,
+    });
 
     if (error) {
+      const rpcResponse = mapRpcError(error);
+      if (rpcResponse) return rpcResponse;
       if (error.code === "23505") {
         return NextResponse.json(
           { error: "Tamu dengan nomor HP yang sama sudah terdaftar di acara ini" },
@@ -76,6 +88,7 @@ export async function POST(request) {
       }
       return NextResponse.json({ error: "Gagal menambahkan tamu" }, { status: 500 });
     }
+
     return NextResponse.json(data, { status: 201 });
   } catch (err) {
     return NextResponse.json({ error: "Data tidak valid" }, { status: 400 });

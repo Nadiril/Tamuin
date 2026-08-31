@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { generateToken } from "@/lib/token";
-import { sanitizeCSV, requireRole, insertGuests } from "@/lib/api-helpers";
+import { sanitizeCSV, requireRole, insertGuests, getIdempotencyKey, mapRpcError } from "@/lib/api-helpers";
 
 const VALID_KATEGORI = ["reguler", "vip", "vvip"];
 
@@ -25,8 +25,10 @@ function normalizeRow(g) {
 }
 
 export async function POST(request) {
-  const { supabase, response } = await requireRole(["admin", "panitia"]);
+  const { supabase, user, response } = await requireRole(["admin", "panitia"]);
   if (response) return response;
+
+  const idempotencyKey = getIdempotencyKey(request);
 
   try {
     const { guests: guestData } = await request.json();
@@ -42,7 +44,6 @@ export async function POST(request) {
     }
 
     // Dedup: skip tamu yang no_hp-nya sudah terdaftar di acara yang sama
-    // (dalam database maupun dalam file CSV itu sendiri)
     const acaraIds = [...new Set(guests.map((g) => g.acara_id))];
     const { data: existing } = await supabase
       .from("guests")
@@ -70,6 +71,7 @@ export async function POST(request) {
       return NextResponse.json({ count: 0, skipped }, { status: 200 });
     }
 
+    // Insert guests (CRUD part)
     const { data, error } = await insertGuests(supabase, toInsert);
 
     if (error) {
@@ -84,6 +86,31 @@ export async function POST(request) {
         { status: 500 },
       );
     }
+
+    // Activity + key completion via RPC (atomic)
+    if (idempotencyKey) {
+      const { error: rpcError } = await supabase.rpc("idempotent_guest_import", {
+        p_key: idempotencyKey,
+        p_user_id: user.id,
+        p_guests: guestData,
+        p_count: data.length,
+        p_skipped: skipped,
+      });
+      if (rpcError) {
+        const rpcResponse = mapRpcError(rpcError);
+        if (rpcResponse) return rpcResponse;
+        // Activity insert failed but CRUD succeeded — log and continue
+        console.error("[import] activity insert failed:", rpcError);
+      }
+    } else {
+      // No idempotency key — just log activity directly
+      await supabase.from("activities").insert([{
+        action: "import_guest",
+        detail: `Mengimpor ${data.length} tamu dari CSV${skipped ? ` (${skipped} duplikat dilewati)` : ""}`,
+        user_id: user.id,
+      }]).then(() => {}).catch(console.error);
+    }
+
     return NextResponse.json({ count: data.length, skipped }, { status: 201 });
   } catch (err) {
     return NextResponse.json({ error: "Data tidak valid" }, { status: 400 });

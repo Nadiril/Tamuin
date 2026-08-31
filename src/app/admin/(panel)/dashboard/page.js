@@ -10,7 +10,7 @@ import { CalendarPlus } from "lucide-react";
 import Link from "next/link";
 
 function Skeleton({ className = "" }) {
-  return <div className={`animate-pulse bg-border rounded-lg ${className}`} />;
+  return <div className={`skeleton ${className}`} />;
 }
 
 function getWibDayBounds(date = new Date()) {
@@ -47,7 +47,7 @@ export default function DashboardPage() {
         subtitle="Selamat datang kembali, Admin"
       />
 
-      <div className="flex-1 w-full max-w-[1440px] mx-auto p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8">
+      <div className="flex-1 w-full max-w-[1440px] mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
         {/* Stats */}
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -141,7 +141,7 @@ export default function DashboardPage() {
                   <Skeleton className="h-4 w-24" />
                   <Skeleton className="h-4 w-28" />
                   <Skeleton className="h-4 w-20" />
-                  <div className="pt-3 border-t border-border/50">
+                  <div className="pt-3 border-t border-border">
                     <Skeleton className="h-4 w-24" />
                   </div>
                 </div>

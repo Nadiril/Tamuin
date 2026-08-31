@@ -445,8 +445,8 @@ export default function GuestsPage() {
       {/* Import Modal */}
       {showImportModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={resetImport}></div>
-          <div className="relative glass-card rounded-2xl p-6 sm:p-8 w-full max-w-7xl mx-4 glow-accent max-h-[90vh] overflow-y-auto">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={resetImport}></div>
+          <div className="relative bg-surface rounded-2xl p-6 sm:p-8 w-full max-w-7xl mx-4 shadow-[var(--shadow-dialog)] max-h-[90vh] overflow-y-auto animate-fade-in">
             {importStep === "upload" && (
               <>
                 <div className="flex items-center justify-between mb-6">
@@ -618,8 +618,8 @@ export default function GuestsPage() {
       {/* Add / Edit Guest Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => { setShowModal(false); setEditingGuest(null); setNewGuest({ nama: "", instansi: "", no_hp: "", nama_mahasiswa: "", alamat: "", kategori_tamu: "reguler", acara_id: "" }); }}></div>
-          <div className="relative glass-card rounded-2xl p-6 sm:p-8 w-full max-w-lg mx-4 glow-accent max-h-[90vh] flex flex-col overflow-hidden">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setShowModal(false); setEditingGuest(null); setNewGuest({ nama: "", instansi: "", no_hp: "", nama_mahasiswa: "", alamat: "", kategori_tamu: "reguler", acara_id: "" }); }}></div>
+          <div className="relative bg-surface rounded-2xl p-6 sm:p-8 w-full max-w-lg mx-4 shadow-[var(--shadow-dialog)] max-h-[90vh] flex flex-col overflow-hidden animate-fade-in">
             <div className="flex items-center justify-between mb-6 shrink-0">
               <div>
                 <h2 className="text-lg font-bold text-foreground">{editingGuest ? "Edit Tamu" : "Tambah Tamu Baru"}</h2>
@@ -744,8 +744,8 @@ export default function GuestsPage() {
       {/* Reset Attendance Confirmation Modal */}
       {resetGuest && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setResetGuest(null)}></div>
-          <div className="relative glass-card rounded-2xl p-6 w-full max-w-sm mx-4 glow-accent text-center">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setResetGuest(null)}></div>
+          <div className="relative bg-surface rounded-2xl p-6 w-full max-w-sm mx-4 shadow-[var(--shadow-dialog)] text-center animate-fade-in">
             <div className="w-12 h-12 rounded-full bg-warning/10 text-warning flex items-center justify-center mx-auto mb-4">
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -772,8 +772,8 @@ export default function GuestsPage() {
       {/* Delete All Confirmation Modal */}
       {confirmDeleteAll && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setConfirmDeleteAll(false)}></div>
-          <div className="relative glass-card rounded-2xl p-6 w-full max-w-sm mx-4 glow-danger text-center">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setConfirmDeleteAll(false)}></div>
+          <div className="relative bg-surface rounded-2xl p-6 w-full max-w-sm mx-4 shadow-[var(--shadow-dialog)] text-center animate-fade-in">
             <div className="w-12 h-12 rounded-full bg-danger/10 text-danger flex items-center justify-center mx-auto mb-4">
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -799,8 +799,8 @@ export default function GuestsPage() {
       {/* Delete Confirmation Modal */}
       {confirmDeleteId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setConfirmDeleteId(null)}></div>
-          <div className="relative glass-card rounded-2xl p-6 w-full max-w-sm mx-4 glow-danger text-center">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setConfirmDeleteId(null)}></div>
+          <div className="relative bg-surface rounded-2xl p-6 w-full max-w-sm mx-4 shadow-[var(--shadow-dialog)] text-center animate-fade-in">
             <div className="w-12 h-12 rounded-full bg-danger/10 text-danger flex items-center justify-center mx-auto mb-4">
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />

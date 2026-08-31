@@ -457,8 +457,8 @@ export default function UsersPage() {
       {/* Add User Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => { setShowAddModal(false); setFormError(""); }} />
-          <div className="relative glass-card rounded-2xl p-6 sm:p-8 w-full max-w-md mx-4 glow-accent max-h-[90vh] flex flex-col overflow-hidden">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setShowAddModal(false); setFormError(""); }} />
+          <div className="relative bg-surface rounded-2xl p-6 sm:p-8 w-full max-w-md mx-4 shadow-[var(--shadow-dialog)] max-h-[90vh] flex flex-col overflow-hidden animate-fade-in">
             <div className="flex items-center justify-between mb-6 shrink-0">
               <h3 className="text-lg font-bold text-foreground">Tambah Pengguna</h3>
               <button onClick={() => { setShowAddModal(false); setFormError(""); }} className="text-muted hover:text-foreground transition-colors p-1 cursor-pointer">
@@ -502,8 +502,8 @@ export default function UsersPage() {
       {/* Edit User Modal */}
       {showEditModal && editingUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => { setShowEditModal(false); setFormError(""); }} />
-          <div className="relative glass-card rounded-2xl p-6 sm:p-8 w-full max-w-md mx-4 glow-accent max-h-[90vh] flex flex-col overflow-hidden">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setShowEditModal(false); setFormError(""); }} />
+          <div className="relative bg-surface rounded-2xl p-6 sm:p-8 w-full max-w-md mx-4 shadow-[var(--shadow-dialog)] max-h-[90vh] flex flex-col overflow-hidden animate-fade-in">
             <div className="flex items-center justify-between mb-6 shrink-0">
               <h3 className="text-lg font-bold text-foreground">Edit Pengguna</h3>
               <button onClick={() => { setShowEditModal(false); setFormError(""); }} className="text-muted hover:text-foreground transition-colors p-1 cursor-pointer">
@@ -542,8 +542,8 @@ export default function UsersPage() {
       {/* Reset Password Modal */}
       {showResetModal && resettingUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => { setShowResetModal(false); setResetError(""); }} />
-          <div className="relative glass-card rounded-2xl p-6 sm:p-8 w-full max-w-md mx-4 glow-accent max-h-[90vh] flex flex-col overflow-hidden">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setShowResetModal(false); setResetError(""); }} />
+          <div className="relative bg-surface rounded-2xl p-6 sm:p-8 w-full max-w-md mx-4 shadow-[var(--shadow-dialog)] max-h-[90vh] flex flex-col overflow-hidden animate-fade-in">
             <div className="flex items-center justify-between mb-6 shrink-0">
               <h3 className="text-lg font-bold text-foreground">Reset Password</h3>
               <button onClick={() => { setShowResetModal(false); setResetError(""); }} className="text-muted hover:text-foreground transition-colors p-1 cursor-pointer">
@@ -575,8 +575,8 @@ export default function UsersPage() {
       {/* Delete Confirmation */}
       {showDeleteConfirm && deletingUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => { setShowDeleteConfirm(false); }} />
-          <div className="relative glass-card rounded-2xl p-6 sm:p-8 w-full max-w-md mx-4 max-h-[90vh] flex flex-col overflow-hidden">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setShowDeleteConfirm(false); }} />
+          <div className="relative bg-surface rounded-2xl p-6 sm:p-8 w-full max-w-md mx-4 shadow-[var(--shadow-dialog)] max-h-[90vh] flex flex-col overflow-hidden animate-fade-in">
             <div className="text-center p-2 overflow-y-auto flex-1 pr-1">
               <div className="w-14 h-14 rounded-full bg-danger-muted flex items-center justify-center mx-auto mb-4 mt-2">
                 <svg className="w-7 h-7 text-danger" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -605,8 +605,8 @@ export default function UsersPage() {
       {/* Reject Confirmation */}
       {showRejectConfirm && rejectingUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => { setShowRejectConfirm(false); }} />
-          <div className="relative glass-card rounded-2xl p-6 sm:p-8 w-full max-w-md mx-4 max-h-[90vh] flex flex-col overflow-hidden">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setShowRejectConfirm(false); }} />
+          <div className="relative bg-surface rounded-2xl p-6 sm:p-8 w-full max-w-md mx-4 shadow-[var(--shadow-dialog)] max-h-[90vh] flex flex-col overflow-hidden animate-fade-in">
             <div className="text-center p-2 overflow-y-auto flex-1 pr-1">
               <div className="w-14 h-14 rounded-full bg-danger-muted flex items-center justify-center mx-auto mb-4 mt-2">
                 <svg className="w-7 h-7 text-danger" fill="none" viewBox="0 0 24 24" stroke="currentColor">

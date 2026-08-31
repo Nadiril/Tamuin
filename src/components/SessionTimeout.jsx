@@ -77,38 +77,21 @@ export default function SessionTimeout({ role = "admin" }) {
 
   if (expired) {
     return (
-      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm">
-        <div className="glass-card rounded-2xl p-6 w-full max-w-sm mx-4 glow-accent">
-          <div className="flex flex-col items-center text-center space-y-4">
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+        <div className="bg-surface rounded-2xl p-6 w-full max-w-sm mx-4 shadow-[var(--shadow-dialog)] animate-fade-in text-center">
+          <div className="flex flex-col items-center space-y-4">
             <div className="w-12 h-12 rounded-full bg-warning-muted flex items-center justify-center">
-              <svg
-                className="w-6 h-6 text-warning"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"
-                />
+              <svg className="w-6 h-6 text-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
               </svg>
             </div>
-
             <div>
-              <h3 className="text-lg font-bold text-foreground">
-                Sesi Telah Berakhir
-              </h3>
-              <p className="text-sm text-muted mt-1 leading-relaxed">
-                Sesi Anda telah berakhir karena tidak ada aktivitas. Silakan
-                masuk kembali.
-              </p>
+              <h3 className="text-lg font-bold text-foreground">Sesi Telah Berakhir</h3>
+              <p className="text-sm text-muted mt-1 leading-relaxed">Sesi Anda telah berakhir karena tidak ada aktivitas. Silakan masuk kembali.</p>
             </div>
-
             <button
               onClick={handleGoToLogin}
-              className="w-full py-2.5 px-4 rounded-xl bg-accent text-white text-sm font-medium hover:bg-accent-hover transition-colors cursor-pointer shadow-lg shadow-accent/20 mt-2"
+              className="w-full h-11 rounded-xl bg-gradient-to-b from-accent to-accent-hover text-white text-sm font-semibold shadow-lg shadow-accent/20 transition-all duration-200 hover:-translate-y-0.5 hover:brightness-110 active:translate-y-0 cursor-pointer mt-2"
             >
               Mengerti
             </button>
@@ -121,49 +104,31 @@ export default function SessionTimeout({ role = "admin" }) {
   if (!showWarning) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="glass-card rounded-2xl p-6 w-full max-w-sm mx-4 glow-accent">
-        <div className="flex flex-col items-center text-center space-y-4">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+      <div className="bg-surface rounded-2xl p-6 w-full max-w-sm mx-4 shadow-[var(--shadow-dialog)] animate-fade-in text-center">
+        <div className="flex flex-col items-center space-y-4">
           <div className="w-12 h-12 rounded-full bg-warning-muted flex items-center justify-center">
-            <svg
-              className="w-6 h-6 text-warning"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
+            <svg className="w-6 h-6 text-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-
           <div>
-            <h3 className="text-lg font-bold text-foreground">
-              Sesi Akan Berakhir
-            </h3>
-            <p className="text-sm text-muted mt-1 leading-relaxed">
-              Anda tidak melakukan aktivitas selama beberapa waktu. Sesi akan
-              berakhir dalam:
-            </p>
+            <h3 className="text-lg font-bold text-foreground">Sesi Akan Berakhir</h3>
+            <p className="text-sm text-muted mt-1 leading-relaxed">Anda tidak melakukan aktivitas selama beberapa waktu. Sesi akan berakhir dalam:</p>
           </div>
-
           <div className="text-3xl font-bold text-warning tabular-nums">
             {formatCountdown(remaining)}
           </div>
-
           <div className="flex flex-col w-full gap-2 pt-2">
             <button
               onClick={extend}
-              className="w-full py-2.5 px-4 rounded-xl bg-accent text-white text-sm font-medium hover:bg-accent-hover transition-colors cursor-pointer shadow-lg shadow-accent/20"
+              className="w-full h-11 rounded-xl bg-gradient-to-b from-accent to-accent-hover text-white text-sm font-semibold shadow-lg shadow-accent/20 transition-all duration-200 hover:-translate-y-0.5 hover:brightness-110 active:translate-y-0 cursor-pointer"
             >
               Perpanjang Sesi
             </button>
             <button
               onClick={forceTimeout}
-              className="w-full py-2.5 px-4 rounded-xl border border-border text-sm font-medium text-muted hover:text-foreground hover:bg-card-hover transition-colors cursor-pointer"
+              className="w-full h-11 rounded-xl border border-border text-sm font-semibold text-muted hover:text-foreground hover:bg-bg-secondary transition-colors cursor-pointer"
             >
               Logout Sekarang
             </button>

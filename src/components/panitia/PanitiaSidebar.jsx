@@ -18,7 +18,7 @@ import {
 
 const navItems = [
   { label: "Dashboard", href: "/panitia", icon: LayoutDashboard },
-  { label: "Pilih Acara", href: "/panitia/events", icon: Calendar },
+  { label: "xAcara", href: "/panitia/events", icon: Calendar },
   { label: "Scan QR", href: "/panitia/scan", icon: QrCode },
   { label: "Riwayat Registrasi", href: "/panitia/history", icon: ClipboardList },
   { label: "Profil", href: "/panitia/profile", icon: User },
@@ -49,21 +49,21 @@ export default function PanitiaSidebar({ collapsed, onToggleCollapse, mobileOpen
     return pathname.startsWith(href);
   };
 
-  const sidebarWidth = collapsed ? "w-[72px]" : "w-[280px]";
+  const sidebarWidth = collapsed ? "w-[72px]" : "w-[260px]";
 
   const sidebarContent = (
     <aside
       className={`flex flex-col h-full ${sidebarWidth} bg-sidebar border-r border-border transition-all duration-300 ease-in-out`}
     >
       {/* Logo Section */}
-      <div className={`flex items-center border-b border-border ${collapsed ? "justify-center px-0 py-5" : "px-5 py-4"}`}>
+      <div className={`flex items-center border-b border-border ${collapsed ? "justify-center px-0 py-4" : "px-5 py-4"}`}>
         <Link href="/panitia" className={`flex items-center ${collapsed ? "flex-col gap-2" : "gap-3"}`}>
-          <div className="shrink-0 flex items-center justify-center overflow-hidden rounded-xl" style={{ height: 44, width: collapsed ? 40 : 44 }}>
+          <div className="shrink-0 flex items-center justify-center overflow-hidden rounded-xl" style={{ height: 40, width: collapsed ? 36 : 40 }}>
             <Image
               src="/Logo.webp"
               alt="Tamuin"
-              width={collapsed ? 40 : 44}
-              height={collapsed ? 32 : 35}
+              width={collapsed ? 36 : 40}
+              height={collapsed ? 29 : 32}
               className="object-contain"
               priority
               unoptimized
@@ -71,7 +71,7 @@ export default function PanitiaSidebar({ collapsed, onToggleCollapse, mobileOpen
           </div>
           {!collapsed && (
             <div className="flex flex-col">
-              <span className="text-sm font-bold text-foreground leading-tight tracking-tight">
+              <span className="text-sm font-bold text-foreground leading-tight">
                 Tamuin
               </span>
               <span className="text-xs font-medium text-muted leading-tight mt-0.5">
@@ -83,9 +83,9 @@ export default function PanitiaSidebar({ collapsed, onToggleCollapse, mobileOpen
       </div>
 
       {/* Navigation */}
-      <nav className={`flex-1 overflow-y-auto sidebar-scroll py-3 space-y-0.5 ${collapsed ? "px-0" : "px-2"}`}>
+      <nav className={`flex-1 overflow-y-auto py-3 space-y-0.5 ${collapsed ? "px-2" : "px-3"}`}>
         {!collapsed && (
-          <p className="px-3 mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-[0.08em]">
+          <p className="px-3 mb-2 text-[11px] font-semibold text-muted uppercase tracking-wider">
             Menu
           </p>
         )}
@@ -97,19 +97,16 @@ export default function PanitiaSidebar({ collapsed, onToggleCollapse, mobileOpen
               key={item.href}
               href={item.href}
               onClick={onCloseMobile}
-              className={`relative flex items-center gap-3 rounded-lg text-sm font-medium transition-all duration-200 group
-                ${collapsed ? "justify-center px-0 py-3 w-full" : "px-3 py-2.5"}
+              className={`flex items-center gap-3 rounded-xl text-sm font-medium transition-all duration-150 group
+                ${collapsed ? "justify-center px-0 py-2.5 w-full" : "px-3 py-2.5"}
                 ${
                   active
                     ? "bg-accent-muted text-accent"
-                    : "text-muted hover:text-foreground hover:bg-sidebar-muted"
+                    : "text-muted hover:text-foreground hover:bg-card-hover"
                 }
               `}
               title={collapsed ? item.label : undefined}
             >
-              {active && !collapsed && (
-                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-accent rounded-r-full" />
-              )}
               <Icon className={`shrink-0 transition-colors ${collapsed ? "w-5 h-5" : "w-[18px] h-[18px]"}`} />
               {!collapsed && <span>{item.label}</span>}
             </Link>
@@ -120,7 +117,7 @@ export default function PanitiaSidebar({ collapsed, onToggleCollapse, mobileOpen
       {/* Collapse Toggle (Desktop) */}
       <button
         onClick={onToggleCollapse}
-        className="hidden lg:flex items-center justify-center w-full py-3 border-t border-border text-muted hover:text-foreground transition-colors cursor-pointer"
+        className="hidden lg:flex items-center justify-center w-full py-2.5 border-t border-border text-muted hover:text-foreground hover:bg-card-hover transition-colors cursor-pointer"
       >
         {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
       </button>
@@ -130,7 +127,7 @@ export default function PanitiaSidebar({ collapsed, onToggleCollapse, mobileOpen
         <button
           onClick={handleLogout}
           className={`flex items-center gap-3 text-sm font-medium text-muted hover:text-danger transition-colors cursor-pointer w-full
-            ${collapsed ? "justify-center px-0 py-2" : "px-3 py-2.5 rounded-lg hover:bg-danger-light"}
+            ${collapsed ? "justify-center px-0 py-2" : "px-3 py-2.5 rounded-xl hover:bg-danger-light"}
           `}
           title={collapsed ? "Logout" : undefined}
         >

@@ -14,9 +14,9 @@ export default function Input({
   return (
     <div className={`flex flex-col gap-1.5 ${className}`}>
       {label && (
-        <label htmlFor={id} className="text-sm font-medium text-on-surface">
+        <label htmlFor={id} className="text-sm font-medium text-foreground">
           {label}
-          {required && <span className="text-error ml-1">*</span>}
+          {required && <span className="text-danger ml-1">*</span>}
         </label>
       )}
       <div className="relative">
@@ -32,16 +32,19 @@ export default function Input({
           value={value ?? ""}
           onChange={onChange}
           required={required}
-          className={`h-10 w-full rounded-[10px] bg-surface border border-input-border px-4 text-sm text-foreground placeholder:text-muted/60
-            focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-input-focus
+          className={`h-10 w-full rounded-xl bg-surface border px-4 text-sm text-foreground placeholder:text-muted/60
             transition-all duration-200
             ${icon ? "pl-10" : ""}
-            ${error ? "border-error focus:ring-error/50 focus:border-error" : ""}
+            ${
+              error
+                ? "border-danger focus:outline-none focus:ring-2 focus:ring-danger/30"
+                : "border-input-border focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-input-focus"
+            }
           `}
           {...props}
         />
       </div>
-      {error && <p className="text-xs text-error mt-0.5">{error}</p>}
+      {error && <p className="text-xs text-danger mt-0.5">{error}</p>}
     </div>
   );
 }

@@ -2,150 +2,134 @@
 
 @theme inline {
   /* ═══════════════════════════════════════════════════════════
-     Tamuin — Material 3-inspired design tokens
-     Brand identity preserved (blue #2563eb) · Google Pixel clarity
+     Tamuin — Design System v2
+     Brand: #2563eb preserved · Modern SaaS + M3 Expressive
      Light scheme · Semantic color roles
      ═══════════════════════════════════════════════════════════ */
 
   /* ── Surfaces ─────────────────────────────────────────────── */
-  --color-background: #f5f6f8;            /* surface-dim */
-  --color-surface: #ffffff;               /* surface */
-  --color-surface-variant: #eef1f5;       /* surface-variant */
+  --color-background: #f7f8fa;
+  --color-surface: #ffffff;
+  --color-surface-variant: #f0f2f5;
   --color-card: #ffffff;
-  --color-card-hover: #f5f6f8;
+  --color-card-hover: #f7f8fa;
   --color-sidebar: #ffffff;
-  --color-sidebar-muted: #eef1f5;
+  --color-sidebar-muted: #f0f2f5;
 
   /* ── Text / On colors ─────────────────────────────────────── */
-  --color-foreground: #1b2430;            /* on-surface */
-  --color-on-surface: #1b2430;
-  --color-muted: #5b6675;                 /* on-surface-variant */
-  --color-muted-foreground: #5b6675;
-  --color-on-surface-variant: #5b6675;
+  --color-foreground: #111827;
+  --color-on-surface: #111827;
+  --color-muted: #6b7280;
+  --color-muted-foreground: #6b7280;
+  --color-on-surface-variant: #6b7280;
 
   /* ── Primary (brand) ──────────────────────────────────────── */
   --color-accent: #2563eb;
-  --color-accent-hover: #1e50c8;
-  --color-accent-muted: #e0e9fe;          /* primary-container */
+  --color-accent-hover: #1d4ed8;
+  --color-accent-muted: #eff4ff;
   --color-primary: #2563eb;
   --color-on-primary: #ffffff;
-  --color-primary-container: #e0e9fe;
-  --color-on-primary-container: #173a8f;
+  --color-primary-container: #eff4ff;
+  --color-on-primary-container: #1e40af;
 
   /* ── Secondary ────────────────────────────────────────────── */
-  --color-secondary: #3d4a5c;
+  --color-secondary: #374151;
   --color-on-secondary: #ffffff;
-  --color-secondary-container: #e4e9f0;
-  --color-on-secondary-container: #26303d;
+  --color-secondary-container: #f3f4f6;
+  --color-on-secondary-container: #1f2937;
 
   /* ── Outline / Borders ────────────────────────────────────── */
-  --color-border: #e4e7ec;                /* outline-variant */
-  --color-border-hover: #c7ced8;          /* outline */
-  --color-outline: #7a8696;
-  --color-outline-variant: #e4e7ec;
+  --color-border: #e5e7eb;
+  --color-border-hover: #d1d5db;
+  --color-outline: #9ca3af;
+  --color-outline-variant: #e5e7eb;
 
   /* ── Inputs ───────────────────────────────────────────────── */
   --color-input: #ffffff;
-  --color-input-border: #c9cfd9;
+  --color-input-border: #d1d5db;
   --color-input-focus: #2563eb;
 
   /* ── Status (semantic) ────────────────────────────────────── */
-  --color-success: #15803d;
-  --color-success-muted: #dff2e6;         /* success container */
-  --color-success-light: #e8f6ec;
-  --color-warning: #b45309;
-  --color-warning-muted: #fbeed9;         /* warning container */
-  --color-warning-light: #fdf3e2;
+  --color-success: #16a34a;
+  --color-success-muted: #dcfce7;
+  --color-success-light: #f0fdf4;
+  --color-warning: #d97706;
+  --color-warning-muted: #fef3c7;
+  --color-warning-light: #fffbeb;
   --color-danger: #dc2626;
-  --color-danger-muted: #fde4e4;          /* error container */
-  --color-danger-light: #fcecec;
-  --color-info: #0e7490;
-  --color-info-muted: #def1f7;            /* info container */
+  --color-danger-muted: #fee2e2;
+  --color-danger-light: #fef2f2;
+  --color-info: #0891b2;
+  --color-info-muted: #cffafe;
 
   /* ── Error (M3) ───────────────────────────────────────────── */
   --color-error: #dc2626;
   --color-on-error: #ffffff;
-  --color-error-container: #fde4e4;
-  --color-on-error-container: #7f1d1d;
+  --color-error-container: #fee2e2;
+  --color-on-error-container: #991b1b;
 
   /* ── Typography ───────────────────────────────────────────── */
   --font-sans: var(--font-jakarta);
   --font-mono: var(--font-jakarta);
 
-  /* ── Elevation (subtle, Pixel-like) ───────────────────────── */
-  --shadow-soft: 0 1px 2px rgba(16, 24, 40, 0.03), 0 1px 3px rgba(16, 24, 40, 0.06);
-  --shadow-lifted: 0 4px 12px rgba(16, 24, 40, 0.06), 0 2px 4px rgba(16, 24, 40, 0.05);
-  --shadow-dialog: 0 12px 32px rgba(16, 24, 40, 0.14), 0 4px 12px rgba(16, 24, 40, 0.08);
+  /* ── Elevation ────────────────────────────────────────────── */
+  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-lifted: 0 4px 12px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.04);
+  --shadow-dialog: 0 16px 48px rgba(0, 0, 0, 0.12), 0 4px 16px rgba(0, 0, 0, 0.08);
 }
 
 /* ── Base ────────────────────────────────────────────────────── */
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: #c7ced8 transparent;
+  scrollbar-color: #d1d5db transparent;
 }
 
 html {
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
 }
 
 body {
   background: var(--color-background);
   color: var(--color-foreground);
-  font-family: var(--font-sans), system-ui, sans-serif;
+  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
   line-height: 1.5;
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
 }
 
-/* Accessible focus ring (M3: 2px, on brand) */
-:where(a, button, select, input, textarea, [tabindex]):focus-visible {
+/* Hide native browser password reveal toggle (Chrome/Edge/Opera) */
+input[type="password"]::-webkit-credentials-auto-fill-button,
+input[type="password"]::-webkit-strong-password-auto-fill-button,
+input[type="password"]::-ms-reveal {
+  display: none !important;
+}
+
+/* Accessible focus ring */
+:focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
 
 /* ── Surfaces & elevation ────────────────────────────────────── */
 
-/* Default elevated surface — replaces glass-card */
 .glass-card {
   background: var(--color-surface);
-  border: 1px solid var(--color-outline-variant);
+  border: 1px solid var(--color-border);
   box-shadow: var(--shadow-soft);
 }
 
-/* Subtle accent shadow */
 .glow-accent {
-  box-shadow: 0 4px 24px rgba(37, 99, 235, 0.08), 0 1px 3px rgba(16, 24, 40, 0.06);
+  box-shadow: 0 4px 24px rgba(37, 99, 235, 0.08), 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
 .glow-success {
   box-shadow: 0 4px 24px rgba(22, 163, 74, 0.08);
 }
 
-/* Gradient text (brand accent) */
-.gradient-text {
-  background: linear-gradient(135deg, #2563eb, #6366f1, #0891b2);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-/* Gradient border (kept for brand moments, not overused) */
-.gradient-border {
-  position: relative;
-}
-
-.gradient-border::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(135deg, #2563eb, #6366f1, #0891b2);
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask-composite: exclude;
-  -webkit-mask-composite: xor;
-  pointer-events: none;
+.glow-danger {
+  box-shadow: 0 4px 24px rgba(220, 38, 38, 0.08);
 }
 
 /* ── Tables ──────────────────────────────────────────────────── */
@@ -155,11 +139,9 @@ body {
 }
 
 .table-row-hover:hover {
-  background-color: rgba(37, 99, 235, 0.04);
+  background-color: rgba(37, 99, 235, 0.03);
 }
 
-/* Hide the native scrollbar on the horizontal table scroller —
-   the sticky scrollbar strip below acts as the visible scrollbar. */
 .no-hscroll {
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -170,11 +152,10 @@ body {
   height: 0;
 }
 
-/* Sticky horizontal scrollbar strip (guests table) */
 .scrollbar-strip {
   height: 16px;
   background: var(--color-surface-variant);
-  border-bottom: 1px solid var(--color-outline-variant);
+  border-bottom: 1px solid var(--color-border);
   border-radius: 0 0 14px 14px;
   scrollbar-width: thin;
   scrollbar-color: var(--color-accent) var(--color-surface);
@@ -196,9 +177,33 @@ body {
   border: 2px solid var(--color-surface);
 }
 
-/* ── Login page ───────────────────────────────────────────── */
+/* ── Animations ───────────────────────────────────────────── */
 
-/* Subtle noise texture overlay */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.login-fade-up {
+  animation: fade-in-up 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.login-delay-1 { animation-delay: 0.05s; }
+.login-delay-2 { animation-delay: 0.1s; }
+.login-delay-3 { animation-delay: 0.15s; }
+.login-delay-4 { animation-delay: 0.2s; }
+.login-delay-5 { animation-delay: 0.25s; }
+
+/* Login page noise texture */
 .login-noise::after {
   content: "";
   position: absolute;
@@ -208,50 +213,18 @@ body {
   background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='180'%20height='180'%3E%3Cfilter%20id='n'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='0.85'%20numOctaves='3'%20stitchTiles='stitch'/%3E%3C/filter%3E%3Crect%20width='100%25'%20height='100%25'%20filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
-/* Entrance animations */
-@keyframes login-fade-up {
-  from {
-    opacity: 0;
-    transform: translateY(18px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.login-fade-up {
-  animation: login-fade-up 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-.login-delay-1 { animation-delay: 0.05s; }
-.login-delay-2 { animation-delay: 0.1s; }
-.login-delay-3 { animation-delay: 0.15s; }
-.login-delay-4 { animation-delay: 0.2s; }
-.login-delay-5 { animation-delay: 0.25s; }
-
-/* Soft shine sweep across the branding panel */
 @keyframes login-shine {
-  0% {
-    transform: translateX(-120%) skewX(-18deg);
-  }
-  100% {
-    transform: translateX(220%) skewX(-18deg);
-  }
+  0% { transform: translateX(-120%) skewX(-18deg); }
+  100% { transform: translateX(220%) skewX(-18deg); }
 }
 
 .login-shine {
   animation: login-shine 9s ease-in-out infinite;
 }
 
-/* Slow float for decorative circles */
 @keyframes login-float {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-14px);
-  }
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-14px); }
 }
 
 .login-float {
@@ -266,7 +239,8 @@ body {
   .login-fade-up,
   .login-shine,
   .login-float,
-  .login-float-slow {
+  .login-float-slow,
+  .animate-fade-in {
     animation: none;
   }
 }
@@ -275,4 +249,29 @@ body {
   max-height: 85vh;
   max-height: 85dvh;
   overflow-y: auto;
+}
+
+/* ── Skeleton loading ────────────────────────────────────── */
+
+.skeleton {
+  background: linear-gradient(90deg, var(--color-border) 25%, var(--color-surface-variant) 50%, var(--color-border) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  border-radius: 6px;
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── Pulse subtle (for status dots) ──────────────────────── */
+
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 2s ease-in-out infinite;
 }

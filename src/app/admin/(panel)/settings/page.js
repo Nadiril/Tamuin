@@ -124,7 +124,7 @@ export default function SettingsPage() {
             <p className="text-xs text-muted mt-0.5">Informasi akun dan hak akses Anda</p>
           </div>
           <div className="p-6">
-            <div className="flex items-center gap-5 pb-6 mb-6 border-b border-border/50">
+            <div className="flex items-center gap-5 pb-6 mb-6 border-b border-border">
               <div className="w-16 h-16 rounded-full bg-accent-muted text-accent flex items-center justify-center text-xl font-bold shrink-0">
                 {profile?.display_name
                   ? profile.display_name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
@@ -139,7 +139,7 @@ export default function SettingsPage() {
             </div>
 
             <div className="space-y-4">
-              <div className="flex items-center gap-4 p-4 rounded-lg bg-card-hover">
+              <div className="flex items-center gap-4 p-4 rounded-xl bg-card-hover">
                 <div className="w-9 h-9 rounded-lg bg-accent-muted flex items-center justify-center shrink-0">
                   <User className="w-4 h-4 text-accent" />
                 </div>
@@ -151,7 +151,7 @@ export default function SettingsPage() {
                         type="text"
                         value={nameInput}
                         onChange={(e) => setNameInput(e.target.value)}
-                        className="flex-1 h-9 rounded-lg bg-input border border-input-border px-3 text-sm text-foreground placeholder:text-muted/60 focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-input-focus transition-all min-w-0"
+                        className="flex-1 h-9 rounded-lg bg-surface border border-input-border px-3 text-sm text-foreground placeholder:text-muted/60 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-input-focus transition-all min-w-0"
                         placeholder="Masukkan nama"
                         autoFocus
                         onKeyDown={(e) => {
@@ -183,15 +183,15 @@ export default function SettingsPage() {
                       setNameInput(profile?.display_name || "");
                       setEditingName(true);
                     }}
-                    className="w-8 h-8 rounded-lg bg-input/50 text-muted hover:text-foreground hover:bg-input flex items-center justify-center transition-colors cursor-pointer shrink-0"
+                    className="w-8 h-8 rounded-lg bg-surface-variant text-muted hover:text-foreground hover:bg-border transition-colors cursor-pointer shrink-0"
                     title="Edit nama"
                   >
-                    <Pencil className="w-3.5 h-3.5" />
+                    <Pencil className="w-3.5 h-3.5 mx-auto" />
                   </button>
                 )}
               </div>
 
-              <div className="flex items-center gap-4 p-4 rounded-lg bg-card-hover">
+              <div className="flex items-center gap-4 p-4 rounded-xl bg-card-hover">
                 <div className="w-9 h-9 rounded-lg bg-accent-muted flex items-center justify-center shrink-0">
                   <Mail className="w-4 h-4 text-accent" />
                 </div>
@@ -201,7 +201,7 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-4 p-4 rounded-lg bg-card-hover">
+              <div className="flex items-center gap-4 p-4 rounded-xl bg-card-hover">
                 <div className="w-9 h-9 rounded-lg bg-accent-muted flex items-center justify-center shrink-0">
                   <Shield className="w-4 h-4 text-accent" />
                 </div>
@@ -239,7 +239,7 @@ export default function SettingsPage() {
                     placeholder="Masukkan password baru"
                     value={passwordNew}
                     onChange={(e) => setPasswordNew(e.target.value)}
-                    className="w-full h-10 rounded-xl bg-input border border-input-border pl-10 pr-10 text-sm text-foreground placeholder:text-muted/60 focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-input-focus transition-all"
+                    className="w-full h-10 rounded-xl bg-surface border border-input-border pl-10 pr-10 text-sm text-foreground placeholder:text-muted/60 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-input-focus transition-all"
                     minLength={8}
                   />
                   <button
@@ -264,7 +264,7 @@ export default function SettingsPage() {
                     placeholder="Ulangi password baru"
                     value={passwordConfirm}
                     onChange={(e) => setPasswordConfirm(e.target.value)}
-                    className="w-full h-10 rounded-xl bg-input border border-input-border pl-10 pr-10 text-sm text-foreground placeholder:text-muted/60 focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-input-focus transition-all"
+                    className="w-full h-10 rounded-xl bg-surface border border-input-border pl-10 pr-10 text-sm text-foreground placeholder:text-muted/60 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-input-focus transition-all"
                     minLength={8}
                   />
                   <button
@@ -295,9 +295,9 @@ export default function SettingsPage() {
         </div>
 
         {/* Hapus Data Aplikasi */}
-        <div className="glass-card rounded-2xl p-6 sm:p-8">
+        <div className="glass-card rounded-2xl p-6 sm:p-8 border border-danger/20">
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-danger-muted flex items-center justify-center shrink-0">
+            <div className="w-12 h-12 rounded-xl bg-danger-muted flex items-center justify-center shrink-0">
               <svg className="w-6 h-6 text-danger" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
@@ -315,7 +315,7 @@ export default function SettingsPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-6">
             {countItems.map((item) => (
-              <div key={item.label} className="rounded-xl bg-surface-variant/60 border border-outline-variant px-4 py-3">
+              <div key={item.label} className="rounded-xl bg-surface-variant border border-border px-4 py-3">
                 <p className="text-xs font-semibold text-muted uppercase tracking-wider">{item.label}</p>
                 <p className="text-2xl font-bold text-foreground mt-1">
                   {loadingCounts ? "…" : item.value}
@@ -347,8 +347,8 @@ export default function SettingsPage() {
       {/* Confirmation Modal */}
       {showConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => { setShowConfirm(false); }} />
-          <div className="relative glass-card rounded-2xl p-6 sm:p-8 w-full max-w-md mx-4 max-h-[90vh] flex flex-col overflow-hidden">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setShowConfirm(false); }} />
+          <div className="relative bg-surface rounded-2xl p-6 sm:p-8 w-full max-w-md mx-4 shadow-[var(--shadow-dialog)] max-h-[90vh] flex flex-col overflow-hidden animate-fade-in">
             <div className="text-center p-2 overflow-y-auto flex-1 pr-1">
               <div className="w-14 h-14 rounded-full bg-danger-muted flex items-center justify-center mx-auto mb-4 mt-2">
                 <svg className="w-7 h-7 text-danger" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -367,19 +367,19 @@ export default function SettingsPage() {
                   value={confirmText}
                   onChange={(e) => setConfirmText(e.target.value)}
                   placeholder="HAPUS"
-                  className="w-full rounded-xl bg-input border border-input-border px-4 py-2.5 text-sm text-foreground uppercase focus:outline-none focus:ring-2 focus:ring-danger/50 focus:border-danger transition-all duration-200"
+                  className="w-full rounded-xl bg-surface border border-input-border px-4 py-2.5 text-sm text-foreground uppercase focus:outline-none focus:ring-2 focus:ring-danger/30 focus:border-danger transition-all duration-200"
                   autoFocus
                 />
               </div>
             </div>
-            <div className="flex gap-3 pt-4 border-t border-border/20 shrink-0">
+            <div className="flex gap-3 pt-4 border-t border-border shrink-0">
               <Button type="button" variant="secondary" className="flex-1" onClick={() => { setShowConfirm(false); }} disabled={submitting}>
                 Batal
               </Button>
               <button
                 onClick={handleDelete}
                 disabled={!confirmReady || submitting}
-                className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-[10px] bg-danger text-white text-sm font-medium hover:bg-danger/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
+                className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-danger text-white text-sm font-medium hover:bg-danger/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
               >
                 {submitting ? "Menghapus..." : "Ya, Hapus Semua"}
               </button>

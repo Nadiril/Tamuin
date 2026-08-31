@@ -66,21 +66,24 @@ export default function EventCard({ event, onEdit, onDelete, onStatusChange, pre
 
   return (
     <Link href={`/admin/events/${event.id}`} className="flex h-full">
-      <div className={`group flex flex-col flex-1 rounded-xl bg-surface border shadow-[var(--shadow-soft)] transition-all duration-200 ${event.status === "registrasi_dibuka"
-        ? "border-accent/25 hover:border-accent/40 hover:shadow-[var(--shadow-lifted)]"
-        : "border-outline-variant hover:border-border-hover hover:shadow-[var(--shadow-lifted)]"
-        }`}>
+      <div className={`group flex flex-col flex-1 rounded-xl bg-surface border transition-all duration-200 ${
+        event.status === "registrasi_dibuka"
+          ? "border-accent/25 hover:border-accent/40 hover:shadow-[var(--shadow-lifted)]"
+          : "border-border hover:border-border-hover hover:shadow-[var(--shadow-lifted)]"
+      }`}>
         {/* Top color bar */}
-        <div className={`h-1 w-full rounded-t-[calc(0.75rem-1px)] ${event.status === "registrasi_dibuka" ? "bg-accent" : event.status === "akan_datang" ? "bg-warning" : "bg-border-hover"}`} />
+        <div className={`h-1 w-full rounded-t-[calc(0.75rem-1px)] ${
+          event.status === "registrasi_dibuka" ? "bg-accent" : event.status === "akan_datang" ? "bg-warning" : "bg-border-hover"
+        }`} />
 
-        <div className="flex flex-col flex-1 p-5 space-y-3.5">
+        <div className="flex flex-col flex-1 p-5 space-y-3">
           {/* Header */}
           <div>
             <span className={`${s.badge} text-xs font-semibold px-2.5 py-1 rounded-full inline-flex items-center gap-1.5`}>
               <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`}></span>
               {s.label}
             </span>
-            <h3 className="text-base font-semibold text-foreground leading-snug line-clamp-2 group-hover:text-accent transition-colors duration-200 mt-2">
+            <h3 className="text-base font-semibold text-foreground leading-snug line-clamp-2 group-hover:text-accent transition-colors duration-150 mt-2">
               {event.nama_acara}
             </h3>
           </div>
@@ -88,69 +91,32 @@ export default function EventCard({ event, onEdit, onDelete, onStatusChange, pre
           {/* Info */}
           <div className="space-y-1.5">
             <div className="flex items-center gap-2 text-xs text-muted">
-              <svg
-                className="w-3.5 h-3.5 shrink-0"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                />
+              <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
               <span className="truncate">{formatDate(event.tanggal_mulai)}{event.jam_mulai ? `, ${event.jam_mulai}` : ""}</span>
             </div>
 
             <div className="flex items-center gap-2 text-xs text-muted">
-              <svg
-                className="w-3.5 h-3.5 shrink-0"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                />
+              <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
               <span className="truncate">{event.lokasi}</span>
             </div>
 
             <div className="flex items-center gap-2 text-xs text-muted">
-              <svg
-                className="w-3.5 h-3.5 shrink-0"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"
-                />
+              <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
-              <span className="font-medium text-foreground/80">
-                {totalTamu}
-              </span>
+              <span className="font-medium text-foreground/80">{totalTamu}</span>
               <span>Tamu</span>
             </div>
           </div>
 
           {/* Footer actions */}
           {preview ? (
-            <div className="mt-auto pt-3.5 border-t border-outline-variant">
+            <div className="mt-auto pt-3 border-t border-border">
               <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-accent group-hover:text-accent-hover transition-colors">
                 Lihat Detail
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -159,14 +125,14 @@ export default function EventCard({ event, onEdit, onDelete, onStatusChange, pre
               </span>
             </div>
           ) : (
-            <div className="mt-auto pt-3.5 border-t border-outline-variant flex items-center justify-between gap-2">
+            <div className="mt-auto pt-3 border-t border-border flex items-center justify-between gap-2">
               <div className="flex items-center gap-0.5">
                 {(onEdit || onDelete) && (
                   <>
                     {onEdit && (
                       <button
                         onClick={(e) => { e.preventDefault(); e.stopPropagation(); onEdit(event); }}
-                        className="p-2 rounded-lg text-muted hover:text-accent hover:bg-accent-muted transition-all cursor-pointer"
+                        className="p-2 rounded-lg text-muted hover:text-accent hover:bg-accent-muted transition-colors cursor-pointer"
                         title="Edit acara"
                       >
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -177,7 +143,7 @@ export default function EventCard({ event, onEdit, onDelete, onStatusChange, pre
                     {onDelete && (
                       <button
                         onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete(event.id); }}
-                        className="p-2 rounded-lg text-muted hover:text-danger hover:bg-danger-muted transition-all cursor-pointer"
+                        className="p-2 rounded-lg text-muted hover:text-danger hover:bg-danger-muted transition-colors cursor-pointer"
                         title="Hapus acara"
                       >
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -189,7 +155,7 @@ export default function EventCard({ event, onEdit, onDelete, onStatusChange, pre
                       <div className="relative" ref={statusRef}>
                         <button
                           onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowStatusDropdown((v) => !v); }}
-                          className="p-2 rounded-lg text-muted hover:text-accent hover:bg-accent-muted transition-all cursor-pointer"
+                          className="p-2 rounded-lg text-muted hover:text-accent hover:bg-accent-muted transition-colors cursor-pointer"
                           title="Ubah Status"
                         >
                           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -197,7 +163,7 @@ export default function EventCard({ event, onEdit, onDelete, onStatusChange, pre
                           </svg>
                         </button>
                         {showStatusDropdown && (
-                          <div className="absolute left-0 top-full mt-1 z-50 w-44 glass-card rounded-xl py-1.5 shadow-xl border border-outline-variant">
+                          <div className="absolute left-0 top-full mt-1 z-50 w-44 bg-surface border border-border rounded-xl py-1 shadow-[var(--shadow-dialog)]">
                             {statusList.map((st) => (
                               <button
                                 key={st.value}
@@ -207,10 +173,11 @@ export default function EventCard({ event, onEdit, onDelete, onStatusChange, pre
                                   onStatusChange(event, st.value);
                                   setShowStatusDropdown(false);
                                 }}
-                                className={`w-full text-left px-3 py-2 text-sm font-medium transition-colors ${event.status === st.value
-                                  ? "text-accent bg-accent-muted"
-                                  : "text-muted hover:text-foreground hover:bg-surface-variant"
-                                  }`}
+                                className={`w-full text-left px-3 py-2 text-sm font-medium transition-colors ${
+                                  event.status === st.value
+                                    ? "text-accent bg-accent-muted"
+                                    : "text-muted hover:text-foreground hover:bg-surface-variant"
+                                }`}
                               >
                                 {st.label}
                               </button>
@@ -224,10 +191,11 @@ export default function EventCard({ event, onEdit, onDelete, onStatusChange, pre
               </div>
               <span
                 onClick={handleRegistrasi}
-                className={`inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg transition-all duration-200 ${isRegistrasiDisabled
-                  ? "bg-surface-variant text-muted/50 cursor-not-allowed"
-                  : "bg-primary text-on-primary hover:bg-accent-hover cursor-pointer shadow-sm"
-                  }`}
+                className={`inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg transition-all duration-200 ${
+                  isRegistrasiDisabled
+                    ? "bg-surface-variant text-muted/50 cursor-not-allowed"
+                    : "bg-accent text-white hover:bg-accent-hover cursor-pointer shadow-sm"
+                }`}
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />

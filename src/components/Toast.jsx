@@ -39,10 +39,6 @@ const barStyles = {
   warning: "bg-warning",
 };
 
-/**
- * Toast notification component.
- * @param {{ message: string, type?: 'success'|'error'|'info', duration?: number, onClose: () => void }} props
- */
 export default function Toast({ message, type = "success", duration = 3000, onClose }) {
   const [visible, setVisible] = useState(false);
   const [leaving, setLeaving] = useState(false);
@@ -53,12 +49,8 @@ export default function Toast({ message, type = "success", duration = 3000, onCl
   }, [onClose]);
 
   useEffect(() => {
-    // Trigger enter animation
     const enterTimer = setTimeout(() => setVisible(true), 10);
-
-    // Auto-dismiss
     const dismissTimer = setTimeout(() => handleClose(), duration);
-
     return () => {
       clearTimeout(enterTimer);
       clearTimeout(dismissTimer);
@@ -69,7 +61,7 @@ export default function Toast({ message, type = "success", duration = 3000, onCl
     <div
       className={`
         relative flex items-start gap-3 w-full max-w-sm px-4 py-3.5
-        glass-card border rounded-2xl shadow-xl overflow-hidden
+        bg-surface border rounded-xl shadow-[var(--shadow-dialog)] overflow-hidden
         transition-all duration-300
         ${styles[type]}
         ${visible && !leaving ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}

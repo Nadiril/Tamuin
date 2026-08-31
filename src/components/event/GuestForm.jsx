@@ -72,7 +72,7 @@ export default function GuestForm({ event }) {
         </div>
 
         <div className="relative text-center max-w-md mx-4">
-          <div className="w-20 h-20 rounded-2xl bg-success-muted mx-auto flex items-center justify-center mb-5 glow-success">
+          <div className="w-20 h-20 rounded-2xl bg-success-muted mx-auto flex items-center justify-center mb-5 shadow-[0_8px_24px_rgba(34,197,94,0.15)]">
             <svg className="w-10 h-10 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
@@ -85,7 +85,7 @@ export default function GuestForm({ event }) {
           </p>
           <p className="text-accent font-semibold text-lg mb-6">{event.nama_acara}</p>
 
-          <div className="glass-card rounded-2xl p-5 text-left space-y-3 mb-6">
+          <div className="bg-surface rounded-2xl p-5 text-left space-y-3 mb-6 shadow-[var(--shadow-card)]">
             <div className="flex justify-between text-sm">
               <span className="text-muted">Nama</span>
               <span className="text-foreground font-medium">{submittedData.nama}</span>
@@ -139,7 +139,7 @@ export default function GuestForm({ event }) {
           <p className="text-sm text-muted mt-1">Silakan isi data kehadiran Anda</p>
         </div>
 
-        <div className="glass-card rounded-2xl p-5 mb-6">
+        <div className="bg-surface rounded-2xl p-5 mb-6 shadow-[var(--shadow-card)]">
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 rounded-xl bg-accent-muted text-accent flex items-center justify-center shrink-0">
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -173,7 +173,7 @@ export default function GuestForm({ event }) {
           </div>
         </div>
 
-        <div className="glass-card rounded-2xl p-8 glow-accent">
+        <div className="bg-surface rounded-2xl p-8 shadow-[var(--shadow-dialog)]">
           <div className="min-h-[52px]" role="status" aria-live="polite">
             {error && (
               <div className="bg-danger-muted border border-danger/20 rounded-xl px-4 py-3 text-sm text-danger mb-4">{error}</div>

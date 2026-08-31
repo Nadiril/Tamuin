@@ -185,8 +185,8 @@ export default function EventsPage() {
       {/* Create / Edit Event Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={resetForm}></div>
-          <div className="relative glass-card rounded-2xl p-6 sm:p-8 w-full max-w-lg mx-4 glow-accent max-h-[90vh] flex flex-col overflow-hidden">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={resetForm}></div>
+          <div className="relative bg-surface rounded-2xl p-6 sm:p-8 w-full max-w-lg mx-4 shadow-[var(--shadow-dialog)] max-h-[90vh] flex flex-col overflow-hidden animate-fade-in">
             <div className="flex items-center justify-between mb-6 shrink-0">
               <div>
                 <h2 className="text-lg font-bold text-foreground">{editingEvent ? "Edit Acara" : "Buat Acara Baru"}</h2>
@@ -220,8 +220,8 @@ export default function EventsPage() {
       {/* Delete Confirmation Modal */}
       {confirmDeleteId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setConfirmDeleteId(null)}></div>
-          <div className="relative glass-card rounded-2xl p-6 w-full max-w-sm mx-4 glow-danger text-center">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setConfirmDeleteId(null)}></div>
+          <div className="relative bg-surface rounded-2xl p-6 w-full max-w-sm mx-4 shadow-[var(--shadow-dialog)] text-center animate-fade-in">
             <div className="w-12 h-12 rounded-full bg-danger/10 text-danger flex items-center justify-center mx-auto mb-4">
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />

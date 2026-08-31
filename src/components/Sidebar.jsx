@@ -96,9 +96,9 @@ export default function Sidebar() {
   const sidebarContent = (
     <aside className={`flex flex-col h-full ${sidebarWidth} bg-sidebar border-r border-border transition-all duration-300 ease-in-out`}>
       {/* Logo */}
-      <div className={`flex items-center border-b border-border ${collapsed ? "justify-center px-0 py-4" : "px-6 py-5"}`}>
+      <div className={`flex items-center border-b border-border ${collapsed ? "justify-center px-0 py-4" : "px-5 py-4"}`}>
         <Link href="/admin/dashboard" className={`flex items-center ${collapsed ? "flex-col gap-2" : "gap-3"}`}>
-          <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center overflow-hidden shadow-lg shadow-accent/20 shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center overflow-hidden shadow-sm shrink-0">
             <Image
               src="/Logo.webp"
               alt="Tamuin"
@@ -112,7 +112,7 @@ export default function Sidebar() {
           </div>
           {!collapsed && (
             <div>
-              <h1 className="text-sm font-bold text-foreground leading-tight tracking-tight">Tamuin</h1>
+              <h1 className="text-sm font-bold text-foreground leading-tight">Tamuin</h1>
               <p className="text-xs text-muted font-medium">Panel Admin</p>
             </div>
           )}
@@ -120,9 +120,9 @@ export default function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className={`flex-1 overflow-y-auto py-4 space-y-1 ${collapsed ? "px-2" : "px-3"}`}>
+      <nav className={`flex-1 overflow-y-auto py-3 space-y-0.5 ${collapsed ? "px-2" : "px-3"}`}>
         {!collapsed && (
-          <p className="px-3 mb-3 text-xs font-semibold text-muted uppercase tracking-widest">
+          <p className="px-3 mb-2 text-[11px] font-semibold text-muted uppercase tracking-wider">
             Menu Utama
           </p>
         )}
@@ -134,8 +134,8 @@ export default function Sidebar() {
               key={item.href}
               href={item.href}
               onClick={() => setMobileOpen(false)}
-              className={`flex items-center gap-3 rounded-xl text-sm font-medium transition-all duration-200 group
-                ${collapsed ? "justify-center py-3" : "px-3 py-3"}
+              className={`flex items-center gap-3 rounded-xl text-sm font-medium transition-all duration-150 group
+                ${collapsed ? "justify-center py-2.5" : "px-3 py-2.5"}
                 ${
                   isActive
                     ? "bg-accent-muted text-accent"
@@ -162,15 +162,15 @@ export default function Sidebar() {
       {/* Collapse Toggle (Desktop) */}
       <button
         onClick={() => setCollapsed((c) => !c)}
-        className="hidden lg:flex items-center justify-center w-full py-3 border-t border-border text-muted hover:text-foreground transition-colors cursor-pointer"
+        className="hidden lg:flex items-center justify-center w-full py-2.5 border-t border-border text-muted hover:text-foreground hover:bg-card-hover transition-colors cursor-pointer"
       >
         {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
       </button>
 
       {/* Footer */}
-      <div className={`border-t border-border ${collapsed ? "px-0 py-3 flex justify-center" : "px-4 py-4"}`}>
+      <div className={`border-t border-border ${collapsed ? "px-0 py-3 flex justify-center" : "px-3 py-3"}`}>
         <div className={`flex items-center gap-3 ${collapsed ? "" : "px-2"}`}>
-          <div className={`shrink-0 rounded-full bg-accent-muted text-accent flex items-center justify-center text-xs font-bold ${collapsed ? "w-8 h-8" : "w-8 h-8"}`}>
+          <div className="shrink-0 rounded-full bg-accent-muted text-accent flex items-center justify-center text-xs font-bold w-8 h-8">
             {displayName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase() || "AD"}
           </div>
           {!collapsed && (
@@ -184,7 +184,7 @@ export default function Sidebar() {
                   await supabase.auth.signOut();
                   router.push("/");
                 }}
-                className="text-muted hover:text-danger transition-colors cursor-pointer"
+                className="text-muted hover:text-danger transition-colors cursor-pointer p-1"
                 title="Logout"
               >
                 <LogOut className="w-4 h-4" />
@@ -198,15 +198,15 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* ── Desktop: sidebar fixed di kiri ── */}
+      {/* Desktop: sidebar fixed di kiri */}
       <div className={`hidden lg:block fixed left-0 top-0 h-screen z-40 transition-all duration-300 ${sidebarWidth}`}>
         {sidebarContent}
       </div>
 
-      {/* ── Mobile: hamburger button ── */}
+      {/* Mobile: hamburger button */}
       <button
         onClick={() => setMobileOpen(true)}
-        className="lg:hidden fixed top-2.5 left-4 z-50 w-9 h-9 rounded-xl bg-card border border-border flex items-center justify-center text-muted hover:text-foreground transition-colors"
+        className="lg:hidden fixed top-2.5 left-4 z-50 w-9 h-9 rounded-xl bg-card border border-border flex items-center justify-center text-muted hover:text-foreground transition-colors shadow-sm"
         aria-label="Buka menu"
       >
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -214,14 +214,14 @@ export default function Sidebar() {
         </svg>
       </button>
 
-      {/* ── Mobile: overlay + drawer ── */}
+      {/* Mobile: overlay + drawer */}
       {mobileOpen && (
         <div className="lg:hidden fixed inset-0 z-50 flex">
           <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
             onClick={() => setMobileOpen(false)}
           />
-          <div className="relative h-full">
+          <div className="relative h-full shadow-2xl">
             {sidebarContent}
           </div>
         </div>

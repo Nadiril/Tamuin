@@ -52,7 +52,7 @@ export default function ScanConfirm({ token, guest: initialGuest }) {
           <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-success/5 rounded-full blur-3xl" />
         </div>
         <div className="relative text-center max-w-sm">
-          <div className="w-20 h-20 rounded-2xl bg-success-muted mx-auto flex items-center justify-center mb-5 glow-success">
+          <div className="w-20 h-20 rounded-2xl bg-success-muted mx-auto flex items-center justify-center mb-5 shadow-[0_8px_24px_rgba(34,197,94,0.15)]">
             <svg className="w-10 h-10 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
@@ -61,7 +61,7 @@ export default function ScanConfirm({ token, guest: initialGuest }) {
           <p className="text-muted text-sm mb-2">Selamat datang,</p>
           <p className="text-accent font-semibold text-lg mb-1">{guest.nama}</p>
           <p className="text-sm text-muted mb-6">{event?.nama_acara || "—"}</p>
-          <div className="glass-card rounded-2xl p-5 text-left space-y-3 mb-6">
+          <div className="bg-surface rounded-2xl p-5 text-left space-y-3 mb-6 shadow-[var(--shadow-card)]">
 <div className="flex justify-between text-sm">
             <span className="text-muted">Instansi</span>
             <span className="text-foreground font-medium">{guest.instansi || "—"}</span>
@@ -110,7 +110,7 @@ export default function ScanConfirm({ token, guest: initialGuest }) {
         <h1 className="text-xl font-bold text-foreground mb-2">Konfirmasi Kehadiran</h1>
         <p className="text-sm text-muted mb-6">Scan QR Code berhasil. Konfirmasi kehadiran Anda di bawah ini.</p>
 
-        <div className="glass-card rounded-2xl p-5 text-left space-y-3 mb-6">
+        <div className="bg-surface rounded-2xl p-5 text-left space-y-3 mb-6 shadow-[var(--shadow-card)]">
           <div className="flex justify-between text-sm">
             <span className="text-muted">Nama</span>
             <span className="text-foreground font-medium">{guest.nama}</span>

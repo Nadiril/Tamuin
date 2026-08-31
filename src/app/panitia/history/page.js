@@ -373,8 +373,8 @@ export default function HistoryPage() {
       {/* Detail Modal */}
       {detailGuest && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setDetailGuest(null)} />
-          <div className="relative glass-card rounded-2xl shadow-xl w-full max-w-md mx-4 max-h-[90vh] flex flex-col overflow-hidden">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setDetailGuest(null)} />
+          <div className="relative bg-surface rounded-2xl shadow-[var(--shadow-dialog)] animate-fade-in w-full max-w-md mx-4 max-h-[90vh] flex flex-col overflow-hidden">
             <div className="flex items-center justify-between px-5 py-4 border-b border-border shrink-0">
               <h3 className="text-sm font-semibold text-foreground">Detail Tamu</h3>
               <button onClick={() => setDetailGuest(null)} className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-card-hover transition-colors cursor-pointer">

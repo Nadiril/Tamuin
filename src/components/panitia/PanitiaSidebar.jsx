@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useCallback, useRef } from "react";
+import { useEffect, useCallback, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import {
   LayoutDashboard,
@@ -27,9 +27,7 @@ const navItems = [
 export default function PanitiaSidebar({ collapsed, onToggleCollapse, mobileOpen, onCloseMobile }) {
   const pathname = usePathname() ?? "";
   const router = useRouter();
-  const supabaseRef = useRef(null);
-  if (!supabaseRef.current) supabaseRef.current = createClient();
-  const supabase = supabaseRef.current;
+  const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
     const handleResize = () => {
@@ -107,7 +105,7 @@ export default function PanitiaSidebar({ collapsed, onToggleCollapse, mobileOpen
               `}
               title={collapsed ? item.label : undefined}
             >
-              <Icon className={`shrink-0 transition-colors ${collapsed ? "w-5 h-5" : "w-[18px] h-[18px]"}`} />
+              <Icon className={`shrink-0 transition-colors ${collapsed ? "w-5 h-5" : "w-4.5 h-4.5"}`} />
               {!collapsed && <span>{item.label}</span>}
             </Link>
           );
@@ -131,7 +129,7 @@ export default function PanitiaSidebar({ collapsed, onToggleCollapse, mobileOpen
           `}
           title={collapsed ? "Logout" : undefined}
         >
-          <LogOut className="w-[18px] h-[18px] shrink-0" />
+          <LogOut className="w-4.5 h-4.5 shrink-0" />
           {!collapsed && <span>Logout</span>}
         </button>
       </div>

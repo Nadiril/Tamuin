@@ -51,7 +51,7 @@ const nextConfig = {
               "img-src 'self' data: https://api.qrserver.com",
               "font-src 'self' data:",
               "media-src 'self' data:",
-              "connect-src 'self' https://iksogaopebiyhnykalnb.supabase.co",
+              "connect-src 'self' https://iksogaopebiyhnykalnb.supabase.co wss://iksogaopebiyhnykalnb.supabase.co",
               "frame-ancestors 'none'",
             ].join("; "),
           },

@@ -50,7 +50,7 @@ function PanitiaLayoutInner({ children }) {
         mobileOpen={mobileOpen}
         onCloseMobile={() => setMobileOpen(false)}
       />
-      <div className={`transition-all duration-300 ${collapsed ? "lg:ml-[72px]" : "lg:ml-[280px]"}`}>
+      <div className={`transition-all duration-300 ${collapsed ? "lg:ml-[72px]" : "lg:ml-[260px]"}`}>
         <PanitiaNavbar
           panitiaName={panitiaName}
           collapsed={collapsed}

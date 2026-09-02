@@ -18,7 +18,7 @@ import {
 
 const navItems = [
   { label: "Dashboard", href: "/panitia", icon: LayoutDashboard },
-  { label: "xAcara", href: "/panitia/events", icon: Calendar },
+  { label: "Acara", href: "/panitia/events", icon: Calendar },
   { label: "Scan QR", href: "/panitia/scan", icon: QrCode },
   { label: "Riwayat Registrasi", href: "/panitia/history", icon: ClipboardList },
   { label: "Profil", href: "/panitia/profile", icon: User },

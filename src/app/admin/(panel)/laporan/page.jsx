@@ -278,9 +278,9 @@ export default function LaporanPage() {
                       <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">Nama Mahasiswa</th>
                       <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">Alamat</th>
                       <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">Kategori</th>
-                      <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">Status</th>
+                      <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3 whitespace-nowrap">Status</th>
                       {!eventFilter && (
-                        <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">Acara</th>
+                        <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3 whitespace-nowrap">Acara</th>
                       )}
                     </tr>
                   </thead>
@@ -300,7 +300,7 @@ export default function LaporanPage() {
                             {guest.kategori_tamu === "vvip" ? "VVIP" : guest.kategori_tamu === "vip" ? "VIP" : "Reguler"}
                           </span>
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-3 whitespace-nowrap">
                           <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
                             guest.status_kehadiran === "terlambat" ? "bg-warning-muted text-warning border border-warning/20" :
                             guest.status_kehadiran === "tidak_hadir" ? "bg-danger-muted text-danger border border-danger/20" :
@@ -310,7 +310,7 @@ export default function LaporanPage() {
                           </span>
                         </td>
                         {!eventFilter && (
-                          <td className="px-4 py-3">
+                          <td className="px-4 py-3 whitespace-nowrap">
                             <span className="text-xs bg-accent-muted text-accent px-2.5 py-1 rounded-full font-medium">
                               {getEventName(guest.acara_id)}
                             </span>
